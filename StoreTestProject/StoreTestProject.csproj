@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{3DB13C44-0E2D-4144-8547-ED5312A83B95}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>StoreTestProject</RootNamespace>
+    <AssemblyName>StoreTestProject</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Data.Schema, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.Data.Schema.UnitTesting, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data.Linq" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.XML" />
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
+  <ItemGroup>
+    <CodeAnalysisDependentAssemblyPaths Condition=" '$(VS100COMNTOOLS)' != '' " Include="$(VS100COMNTOOLS)..\IDE\PrivateAssemblies">
+      <Visible>False</Visible>
+    </CodeAnalysisDependentAssemblyPaths>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StoreOrderTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Kesco.Lib.BaseExtention\Kesco.Lib.BaseExtention.csproj">
+      <Project>{D26C8D93-C51B-4F61-ADA8-8527A18E4C41}</Project>
+      <Name>Kesco.Lib.BaseExtention</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kesco.Lib.Convert\Kesco.Lib.ConvertExtention.csproj">
+      <Project>{9C6AB086-FDB5-4FBC-B358-092C47F6B4F4}</Project>
+      <Name>Kesco.Lib.ConvertExtention</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kesco.Lib.DALC\Kesco.Lib.DALC.csproj">
+      <Project>{5F647577-BC44-41DE-AFBE-BC47C91548F1}</Project>
+      <Name>Kesco.Lib.DALC</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kesco.Lib.Entities\Kesco.Lib.Entities.csproj">
+      <Project>{DEAA04C2-AFB2-4AD0-B161-A5BF6C26A9DB}</Project>
+      <Name>Kesco.Lib.Entities</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kesco.Lib.Localization\Kesco.Lib.Localization.csproj">
+      <Project>{895BE7DB-796B-40DD-B338-01B9C53F8308}</Project>
+      <Name>Kesco.Lib.Localization</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kesco.Lib.Log\Kesco.Lib.Log.csproj">
+      <Project>{FC924B22-160A-4F7F-98EB-63E420DE694E}</Project>
+      <Name>Kesco.Lib.Log</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kesco.Lib.Web.Comet\Kesco.Lib.Web.Comet\Kesco.Lib.Web.Comet.csproj">
+      <Project>{EB32DBFE-59E0-4F6C-A718-BE9BA708C64F}</Project>
+      <Name>Kesco.Lib.Web.Comet</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kesco.Lib.Web.Controls.V4\Kesco.Lib.Web.Controls.V4.csproj">
+      <Project>{C24FDAB8-D076-4F0C-8932-DB8160E4C4EF}</Project>
+      <Name>Kesco.Lib.Web.Controls.V4</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kesco.Lib.Web.DBSelect.V4\Kesco.Lib.Web.DBSelect.V4.csproj">
+      <Project>{874E2035-E05B-463E-805D-3B9944A34AF9}</Project>
+      <Name>Kesco.Lib.Web.DBSelect.V4</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Kesco.Lib.Web.Settings\Kesco.Lib.Web.Settings.csproj">
+      <Project>{26BB8CDB-8901-44BF-85BC-864F97941C60}</Project>
+      <Name>Kesco.Lib.Web.Settings</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\StoresV4\StoresV4.csproj">
+      <Project>{280986AC-80D5-46D2-A807-370998C990C5}</Project>
+      <Name>StoresV4</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Тестовые ссылки\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

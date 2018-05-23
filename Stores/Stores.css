@@ -1,0 +1,186 @@
+﻿div.page_content
+{
+    margin: 0 10px 0 10px;
+}
+
+div.predicate_block
+{
+    min-height: 40px;
+    display: inline-block;
+    vertical-align: middle;
+    margin-top:5px;
+}
+
+div.label
+{
+    width: 120px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+div.aligned_control
+{
+    width: 226px;
+    vertical-align: middle;
+    margin-right:20px;
+}
+
+div.aligned_date
+{
+    width: 220px;
+    height: 19px;
+    padding-top: 3px;
+    vertical-align: middle;
+    text-align:center;
+}
+
+/*стиль ограничивает размер блока его содержимым, используется для точного отображения рамки fieldset*/
+div.wrap_inline_block
+{
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/*стиль точно ограничивает высоту элемента select для правильного расположения элементов на одной строке*/
+div.wrap_select
+{
+    vertical-align: middle;
+    display: inline-block;
+    /*height: 24px;*/
+}
+
+/*стиль выравнивает элемент div для правильного расположения элементов на одной строке*/
+div.date_label
+{
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 4px 0 4px;
+}
+
+/*Для нормального отображения объекта helper при операции drag and drop */
+/*
+div.result_table
+{
+    position: relative;
+    display: block;
+}
+*/
+
+/*стили для отображения статусной строки*/
+.footer {
+    width:100%;
+    position:absolute;
+    bottom:5px;
+    left:0;
+}
+
+div.actions_container
+{
+    display: block;
+    width: 40px;
+    margin: 0 auto;
+    /*text-align:left;*/
+    text-align:center;
+}
+
+a.disabled_action_link
+{
+    color: Gray;
+    font-weight:bold;
+    margin-right: 5px;
+}
+
+a.disabled_action_link:hover
+{
+    cursor:default;
+    text-decoration: none;
+}
+
+a.action_link
+{
+    color: #000088;
+    font-weight:bold;
+    margin-right: 5px;
+}
+
+/*отменяет стили установленные в Kesco.css*/
+#insertAfterRow
+{
+    width:auto;
+    padding: inherit;
+}
+
+#SelectedStoresGroup 
+{
+    display: block;
+    margin: 0 0 10px 0
+}
+
+/*
+#editFilter
+{
+    display: block;
+}
+
+#editFilter
+{
+    font-weight:bold;
+}
+*/
+
+#toggleFilterDescription
+{
+    display: block;
+    width: 250px;
+    margin: 10px 0 10px 0;
+}
+
+#setupFormPredicates, #SearchFilterDescription
+{
+    display: block;
+    margin: 0 0 10px 0;
+}
+
+/*
+.SearchFilterHeader
+{
+    display: block;
+    height:20px;
+    font-size: 9pt;
+}
+*/
+
+/*стили resizable добавляют возможность увеличения размеров элементов на всю ширину страницы*/
+.v4_resizable
+{
+    width: 100%;
+}
+
+div.v4_resizable table.v4s td 
+{
+    width: 100%;
+}
+
+/*Стили для отображениея неактуальной таблицы с результатами поиска, вязты из Kesco.App.Web.V4.TimeControl/TimeControl/Common/Kesco.TimeControl.css */
+.Grid8Grayed {border: #dcdcdc 1px solid; border-collapse:collapse;}
+.Grid8Grayed TD {border: #dcdcdc 1px solid; color:#cccccc; }
+.Grid8Grayed A  {color:#cccccc; }
+.Grid8Grayed P  {color:#cccccc; }
+.Grid8Grayed DIV  {color:#cccccc; }
+.Grid8Grayed FONT  {color:#cccccc; }
+.Grid8Grayed TH { border:#dcdcdc 1px solid; }
+.Grid8Grayed IMG{ display:none;}
+
+.GridHeaderGrayed
+{
+    text-align: center;
+    background-color: #dcdcdc;
+    color: white;
+    vertical-align: middle;
+    font-size:8pt;
+}
+
+.checked_row
+{
+    background-color: #B0CEE7!important;
+}
