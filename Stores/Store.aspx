@@ -68,13 +68,13 @@
 <tr>
 <td><cs:Div ID="NameLabel" runat="server">:</cs:Div></td>
 <td>
-<cs:StoreNameTextBox ID="txtName" runat="server" CSSclass="v4_resizable" IsRequired="True" NextControl="txtIBAN"></cs:StoreNameTextBox>
+<cs:StoreNameTextBox ID="txtName" runat="server" CSSclass="v4_resizable" IsRequired="True" NextControl="txtIBAN"  OnChanged="OnStoreNameChanged"></cs:StoreNameTextBox>
 </td>
 </tr>
 <!--IBAN номар счета-->
 <tr id="IbanRow">
 <td><%= Resources.Resx.GetString("STORE_IBAN")%>:</td>
-<td><cs:TextBox ID="txtIBAN" runat="server" CSSclass="v4_resizable" NextControl="chkAccountNumberUnknown" ></cs:TextBox></td>
+<td><cs:TextBox ID="txtIBAN" runat="server" CSSclass="v4_resizable" NextControl="chkAccountNumberUnknown" OnChanged="OnStoreIbanChanged" ></cs:TextBox></td>
 </tr>
 <!--Номер счета неизвестен-->
 <tr id="AccountNumberUnknownRow">

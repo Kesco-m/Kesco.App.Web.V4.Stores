@@ -563,6 +563,8 @@ namespace Kesco.App.Web.Stores
 
             _SizePosKeeper = new WndSizePosKeeper(this, StoresPageHelper.WindowParameters.SrchLeft, StoresPageHelper.WindowParameters.SrchTop, StoresPageHelper.WindowParameters.SrchWidth, StoresPageHelper.WindowParameters.SrchHeight);
             _SizePosKeeper.OnLoad();
+
+            pageBar.SetDisabled(true, true);
         }
 
         /// <summary>

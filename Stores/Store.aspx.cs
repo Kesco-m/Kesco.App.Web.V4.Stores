@@ -385,6 +385,28 @@ namespace Kesco.App.Web.Stores
                 SetStoreType(storeTypeID);
         }
 
+        protected void OnStoreNameChanged(object sender, ProperyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.NewValue))
+            {
+                return;
+            }
+
+            sKeeperBank.Focus();
+
+        }
+
+        protected void OnStoreIbanChanged(object sender, ProperyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.NewValue))
+            {
+                return;
+            }
+
+            sKeeperBank.Focus();
+
+        }
+
         protected void OnManagerChanged(object sender, ProperyChangedEventArgs e)
         {
             sManagerDepartment.ClearSelectedItems();
@@ -1174,14 +1196,20 @@ namespace Kesco.App.Web.Stores
 
             StoreTypeCode = sStoreType.Value.ToInt();
 
-            string Name;
-            string Iban;
+            string Name="";
+            string Iban ="";
             if (chkAccountNumberUnknown.Checked)
             {
                 Name = Iban = StoreNameTextBox.NoNameValue;
             }
             else
             {
+                if (txtName.Value == StoreNameTextBox.NoNameValue)
+                    txtName.Value =  string.Empty;;
+
+                if (txtIBAN.Value == StoreNameTextBox.NoNameValue)
+                    txtIBAN.Value =  string.Empty;;
+
                 Name = txtName.Value;
                 Iban = txtIBAN.Value;
             }

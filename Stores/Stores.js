@@ -107,7 +107,7 @@ function ReturnValueSetCookie(storeId)
 
 function ReturnValue(storeId, storeName)
 {
-    if (mvc == 1) {
+    if (mvc == 1 || mvc == 4) {
         var result = [];
 
         result[0] = {
@@ -204,14 +204,14 @@ function CreateNewStore(params)
     if (params != null && params.length > 0)
         store_url += params;
     var w = v4_windowOpen(store_url, "NewStore", "menubar=no, location=no, resizable=yes, scrollbars=yes, status=no, height=500px, width=600px");
-    w.focus();
+    if (w!=null) w.focus();
 }
 
 //Функция открывает окно для редактирования склада
 function EditStore(store_id) {
     var store_url = storesUrl + '&id=' + store_id;
     var w = v4_windowOpen(store_url, "_blank", "menubar=no, location=no, resizable=yes, scrollbars=yes, status=no, height=500px, width=600px");
-    w.focus()
+    if (w != null) w.focus();
 }
 
 //Функция добавляет склад в отчёт по складам
@@ -223,7 +223,7 @@ function EditStore(store_id) {
 function SrvDisplayStoresReport(report_type) {
     var store_url = storeReportUrl + '&StoreRprtType=' + report_type;
     var w = v4_windowOpen(store_url, "NewStore", "menubar=no, location=no, resizable=yes, scrollbars=yes, status=no, height=500px, width=600px");
-    w.focus()
+    if (w != null) w.focus();
 }
 
 //Функция оправляет команду для поиска склада
@@ -256,9 +256,9 @@ function GrayResultTable() {
 //Функция скрывает или показывает условия поиска
 function toggleFilterDescription() {
     if ($("#SearchFilterDescription:visible").length > 0)
-        FilterDescriptionHide()
+        FilterDescriptionHide();
     else
-        FilterDescriptionShow()
+        FilterDescriptionShow();
 }
 
 //Функция показывает описание фильтра поиска
