@@ -9,9 +9,9 @@
 <head runat="server">
     <title><%= Resources.Resx.GetString("STORE_StoreReport")%></title>
 
-    <link rel="stylesheet" type="text/css" href="Stores.css" />
-    <script src='Stores.js' type='text/javascript'></script>
-    <script src='StoreOrder.js' type='text/javascript'></script>
+    <link rel="stylesheet" type="text/css" href="Kesco.Stores.css" />
+    <script src='Kesco.Stores.js' type='text/javascript'></script>
+    <script src='Kesco.StoreOrder.js' type='text/javascript'></script>
 </head>
 <body>
 <%=RenderDocumentHeader()%>

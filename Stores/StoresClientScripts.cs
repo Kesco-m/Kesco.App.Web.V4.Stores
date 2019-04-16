@@ -9,7 +9,7 @@ namespace Kesco.App.Web.Stores
     /// </summary>
     public static class StoresClientScripts
     {
-        //Метод для установки глобальных переменных для функций из Stores.js
+        //Метод для установки глобальных переменных для функций из Kesco.Stores.js
         public static void InitializeGlobalVariables(Kesco.Lib.Web.Controls.V4.Common.Page p)
         {
             string callbackUrl = (p.Request.QueryString["callbackUrl"]);
@@ -40,9 +40,9 @@ namespace Kesco.App.Web.Stores
                 title, HttpUtility.JavaScriptStringEncode(message.Replace("\r\n", "<br>")), p.Resx.GetString("QSBtnYes"), p.Resx.GetString("QSBtnNo"), btnCommand);
         }
 
-        public static void SetErrDialogOkHandler(Kesco.Lib.Web.Controls.V4.Common.Page p, string new_url)
+        public static void SetErrDialogOkHandler(Kesco.Lib.Web.Controls.V4.Common.Page p, string param)
         {
-            p.JS.Write("SetDialogOkHandler('{0}');", new_url);
+            p.JS.Write("SetDialogOkHandler('{0}');", param);
         }
 
         public static void SetWindowSizePos(Kesco.Lib.Web.Controls.V4.Common.Page p, string strX, string strY, string strWidth, string strHeight)

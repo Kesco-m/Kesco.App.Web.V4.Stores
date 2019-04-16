@@ -8,8 +8,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head id="Head1" runat="server">
     <title><%= Resources.Resx.GetString("STORE_FindStore")%></title>
-    <link rel="stylesheet" type="text/css" href="Stores.css" />
-    <script src='Stores.js' type='text/javascript'></script>
+    <link rel="stylesheet" type="text/css" href="Kesco.Stores.css" />
+    <script src='Kesco.Stores.js' type='text/javascript'></script>
 </head>
 <body>
 

@@ -31,6 +31,7 @@ function SaveStore(param) {
    cmd('cmd', 'SaveButton', 'param', param);
 }
 
+
 //Добавляет способность изменять расположение inline элементов при отображении страницы в диалоге IE
 //SetResizableInDialog.offset = 0;
 function SetResizableInDialog() {

@@ -1,6 +1,10 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.4
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5D91D8E8-680B-4C49-B1CA-23D1630682B1}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kesco.Lib.BaseExtention", "Kesco.Lib.BaseExtention\Kesco.Lib.BaseExtention.csproj", "{D26C8D93-C51B-4F61-ADA8-8527A18E4C41}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kesco.Lib.ConvertExtention", "Kesco.Lib.Convert\Kesco.Lib.ConvertExtention.csproj", "{9C6AB086-FDB5-4FBC-B358-092C47F6B4F4}"
@@ -13,7 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kesco.Lib.Localization", "K
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kesco.Lib.Log", "Kesco.Lib.Log\Kesco.Lib.Log.csproj", "{FC924B22-160A-4F7F-98EB-63E420DE694E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kesco.Lib.Web.Comet", "Kesco.Lib.Web.Comet\Kesco.Lib.Web.Comet.csproj", "{EB32DBFE-59E0-4F6C-A718-BE9BA708C64F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kesco.Lib.Web.Comet", "Kesco.Lib.Web.Comet\Kesco.Lib.Web.Comet\Kesco.Lib.Web.Comet.csproj", "{EB32DBFE-59E0-4F6C-A718-BE9BA708C64F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kesco.Lib.Web.Controls.V4", "Kesco.Lib.Web.Controls.V4\Kesco.Lib.Web.Controls.V4.csproj", "{C24FDAB8-D076-4F0C-8932-DB8160E4C4EF}"
 EndProject
@@ -21,11 +25,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kesco.Lib.Web.DBSelect.V4",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kesco.Lib.Web.Settings", "Kesco.Lib.Web.Settings\Kesco.Lib.Web.Settings.csproj", "{26BB8CDB-8901-44BF-85BC-864F97941C60}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5D91D8E8-680B-4C49-B1CA-23D1630682B1}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StoreTestProject", "StoreTestProject\StoreTestProject.csproj", "{3DB13C44-0E2D-4144-8547-ED5312A83B95}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StoresV4", "Stores\Kesco.App.Web.Stores.csproj", "{280986AC-80D5-46D2-A807-370998C990C5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stores", "Stores\Stores.csproj", "{280986AC-80D5-46D2-A807-370998C990C5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

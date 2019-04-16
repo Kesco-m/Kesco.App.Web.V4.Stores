@@ -61,7 +61,7 @@ namespace Kesco.App.Web.Stores
         private CommandType _sqlCmdType;
 
         //Параметры используемые в последнем запросе поиска
-        public Dictionary<string, object> sqlParams { get; set; }
+        public Dictionary<string, object> SqlParams;
 
         //Параметры сортировки результатов поиска по колонкам в формате имя колонки - _stdAsc или _stdDesc
         private List<KeyValuePair<string, object>> sortData = new List<KeyValuePair<string, object>>();
@@ -80,7 +80,7 @@ namespace Kesco.App.Web.Stores
             _divId = ctrl_id;
             _sqlCmd = sqlCmd;
             _sqlCmdType = sqlCmdType;
-            sqlParams = new Dictionary<string, object>();
+            SqlParams = new Dictionary<string, object>();
         }
 
         /// <summary>
@@ -189,9 +189,9 @@ namespace Kesco.App.Web.Stores
             string strSort = GetSortMode(-1);
 
             if (_sqlCmdType == CommandType.StoredProcedure)
-                sqlParams["@Sort"] = strSort;
+                SqlParams["@Sort"] = strSort;
 
-            DataTable dtStoresResult = DBManager.GetData(_sqlCmd, Config.DS_person, _sqlCmdType, sqlParams, null, strSort, string.Empty, null, null, null, ref pageNum, ref itemsPerPage, ref pageCount, out rowNumber);
+            DataTable dtStoresResult = DBManager.GetData(_sqlCmd, Config.DS_person, _sqlCmdType, SqlParams, null, strSort, string.Empty, null, null, null, ref pageNum, ref itemsPerPage, ref pageCount, out rowNumber);
 
             if (null == dtStoresResult)
             {

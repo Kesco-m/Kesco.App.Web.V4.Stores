@@ -55,7 +55,7 @@ namespace Kesco.App.Web.Stores
         //Параметр mvc в запроса
         public string mvc;
 
-        protected override string HelpUrl {get;set;}
+        public override string HelpUrl { get; set; }
 
         public Store()
         {
@@ -67,7 +67,7 @@ namespace Kesco.App.Web.Stores
         protected void Page_Load(object sender, EventArgs e)
         {
             if (V4IsPostBack) return;
-
+            
             _source = null;
             _reports = null;
             _origUrl = Request.Url;
@@ -91,7 +91,7 @@ namespace Kesco.App.Web.Stores
 
             if (null != strStoreId && (_storeId = strStoreId.ToInt()) != 0)
             {
-                Title = Resx.GetString("STORE_EditStoreTitle");
+                Title = string.IsNullOrEmpty(Title) ? Resx.GetString("STORE_EditStoreTitle") : Title;
 
                 Dictionary<string, object> sqlParams = new Dictionary<string, object>();
                 sqlParams.Add("@КодСклада", (object)_storeId);
@@ -190,7 +190,7 @@ namespace Kesco.App.Web.Stores
             }
             else
             {
-                Title = Resx.GetString("STORE_CreateStoreTitle");
+                Title = string.IsNullOrEmpty(Title)? Resx.GetString("STORE_CreateStoreTitle"):Title;
 
                 //Из БД параметры не загружаются
                 StoresPageHelper pageHelper = new StoresPageHelper(Request, null /*new AppParamsManager(this.ClId, StoresPageHelper.StoreParameterNamesCollection)*/);
@@ -420,7 +420,10 @@ namespace Kesco.App.Web.Stores
             int KeeperCode = sKeeperBank.Value.ToInt();
             int ManagerCode = sManager.Value.ToInt();
 
-            sAgreement.Visible = KeeperCode != ManagerCode || KeeperCode == 0 || ManagerCode==0;
+            sAgreement.Visible =
+                (KeeperCode != ManagerCode || KeeperCode == 0 || ManagerCode == 0) && (sStoreType.Value.Length == 0 ||
+                                                                                       sStoreType.Value.Length > 0 &&
+                                                                                       sStoreType.ValueInt > 20);
             if (sAgreement.Visible) Display("StoreAgreementRow");
             else Hide("StoreAgreementRow");
         }
@@ -435,7 +438,9 @@ namespace Kesco.App.Web.Stores
             int KeeperCode = sKeeperBank.Value.ToInt();
             int ManagerCode = sManager.Value.ToInt();
 
-            sAgreement.Visible = KeeperCode != ManagerCode || KeeperCode == 0 || ManagerCode == 0;
+            sAgreement.Visible = (KeeperCode != ManagerCode || KeeperCode == 0 || ManagerCode == 0) && (sStoreType.Value.Length == 0 ||
+                                                                                                        sStoreType.Value.Length > 0 &&
+                                                                                                        sStoreType.ValueInt > 20);
             if (sAgreement.Visible) Display("StoreAgreementRow");
             else Hide("StoreAgreementRow");
         }
@@ -1050,6 +1055,7 @@ namespace Kesco.App.Web.Stores
                 case 5://Счёт в банке-корреспонденте
                 case 6://Спец. карточный счёт
                 case 7://Депозитный счёт
+                case 8://Специальный счёт (руб.)
                     fBank = true;
                     break;
 
@@ -1104,11 +1110,13 @@ namespace Kesco.App.Web.Stores
             {
                 sKeeperBank.Filter.PersonWhereSearch = 3;
                 sKeeperBank.Filter.PersonType = 4;
+                Hide("StoreAgreementRow");
             }
             else
             {
                 sKeeperBank.Filter.PersonType = 0;
                 sKeeperBank.Filter.PersonWhereSearch = 1;
+                Display("StoreAgreementRow");
             }
 
             StoreType st = new StoreType(storeTypeID.ToString());
@@ -1118,7 +1126,7 @@ namespace Kesco.App.Web.Stores
             else
                 sResource.Filter.AllChildrenWithParentIDs.Clear();
 
-            if (1 == storeTypeID)//Только рубль устанавливаем
+            if (1 == storeTypeID || 8 == storeTypeID)//Только рубль устанавливаем
             {
                 if (string.IsNullOrWhiteSpace(sResource.Value))
                     sResource.Value = st.RootSource;
@@ -1142,6 +1150,7 @@ namespace Kesco.App.Web.Stores
 
                 StoreDepartmentLabel.Value = Resx.GetString("STORE_Department");
             }
+            
         }
 
         /// <summary>
@@ -1322,7 +1331,7 @@ namespace Kesco.App.Web.Stores
                 }
                 else
                 {
-                    this.V4Navigate(storeUrl);
+                    V4Navigate(storeUrl);
                 }
             }
             catch (DetailedException dex)

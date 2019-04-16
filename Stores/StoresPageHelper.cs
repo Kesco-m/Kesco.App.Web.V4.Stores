@@ -26,7 +26,7 @@ namespace Kesco.App.Web.Stores
         public const int selectModeOffset = 1;
 
         //Коллекция имен параметров предыдущих версий приложения для использования с объектом типа AppParamsManager
-        public static StringCollection OldParameterNamesCollection = new StringCollection() {
+        private static StringCollection OldParameterNamesCollection = new StringCollection() {
             "StoreExcept", //склады не включаемые в поиск
             "Search", //строка поиска в разных полях
             "StoreHowSearch", //1 - поле содержит текст, 0 - поле начинается с текста
@@ -42,7 +42,7 @@ namespace Kesco.App.Web.Stores
         };
 
         //Коллекция имен параметров свойств окон приложения для использования с объектом типа AppParamsManager
-        public static StringCollection WindowParameterNamesCollection = new StringCollection() {
+        private static readonly StringCollection WindowParameterNamesCollection = new StringCollection{
             "StoreSrchWndLeft",
             "StoreSrchWndTop",
              //Размеры окна поиск складов, используется другими приложениями, изменять нельзя
@@ -64,7 +64,7 @@ namespace Kesco.App.Web.Stores
         };
 
         //Коллекция имен параметров склада
-        public static StringCollection StoreParameterNamesCollection = new StringCollection() {
+        internal static StringCollection StoreParameterNamesCollection = new StringCollection() {
             "StoreValidFrom",
             "StoreValidTo",
             "StoreType",
@@ -82,7 +82,7 @@ namespace Kesco.App.Web.Stores
         };
 
         //Коллекция имен параметров для поиска складов для использования с объектом типа AppParamsManager
-        public static StringCollection SearchParameterNamesCollection = new StringCollection() {
+        internal static StringCollection SearchParameterNamesCollection = new StringCollection{
             "StoreSrchExceptions",
             "StoreSrchTextMode",
             "StoreSrchText",
@@ -122,7 +122,7 @@ namespace Kesco.App.Web.Stores
         };
 
         //Коллекция имен параметров для отчета по складам для использования с объектом типа AppParamsManager
-        public static StringCollection ReportParametersNamesCollection = new StringCollection(){
+        internal static StringCollection ReportParametersNamesCollection = new StringCollection{
             "StoreRprtType",
             "StoreRprtResults",
         };

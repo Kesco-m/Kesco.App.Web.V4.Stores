@@ -32,7 +32,7 @@ namespace Kesco.App.Web.Stores
         //Сохраним исходный порядок, для сравнения его с новым и выделения изменений
         int[,] originalStoresId;
 
-        protected override string HelpUrl { get; set; }
+        public override string HelpUrl { get; set; }
 
         public StoreOrder()
         {
@@ -97,7 +97,7 @@ namespace Kesco.App.Web.Stores
             {
                 //Для того чтобы избежать лишних обновлений, которые случаются при выборе нового типа отчетов по складам
                 object old_value = null;
-                if (_table.sqlParams.TryGetValue("@КодТипаОтчётаПоСкладам", out old_value) && new_report_type == ((string)old_value).ToInt())
+                if (_table.SqlParams.TryGetValue("@КодТипаОтчётаПоСкладам", out old_value) && new_report_type == ((string)old_value).ToInt())
                     return;
 
                 StoresClientScripts.UpdateReportType(this);
@@ -239,7 +239,7 @@ namespace Kesco.App.Web.Stores
                             if (0 == reportType)
                             {
                                 object old_value = null;
-                                if (_table.sqlParams.TryGetValue("@КодТипаОтчётаПоСкладам", out old_value))
+                                if (_table.SqlParams.TryGetValue("@КодТипаОтчётаПоСкладам", out old_value))
                                     reportType = ((string)old_value).ToInt();
                             }
                         }
@@ -505,8 +505,8 @@ namespace Kesco.App.Web.Stores
 
             //pageBar.SetDisabled(true, false);
 
-            _table.sqlParams.Clear();
-            _table.sqlParams.Add("@КодТипаОтчётаПоСкладам", string.IsNullOrEmpty(sStoreReportType.Value) ? DBNull.Value : (object)sStoreReportType.Value);
+            _table.SqlParams.Clear();
+            _table.SqlParams.Add("@КодТипаОтчётаПоСкладам", string.IsNullOrEmpty(sStoreReportType.Value) ? DBNull.Value : (object)sStoreReportType.Value);
 
             //pageBar.CurrentPageNumber = 1;
 

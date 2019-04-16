@@ -5,6 +5,7 @@ using System.Web;
 using System.IO;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 using Kesco.Lib.DALC;
@@ -368,7 +369,7 @@ namespace Kesco.App.Web.Stores
         //Массив соответствий условных идентификаторов и полей на странице
         IdControl[] _predIdCtrls;
 
-        protected override string HelpUrl { get; set; }
+        public override string HelpUrl { get; set; }
 
         public Search()
         {
@@ -771,7 +772,7 @@ namespace Kesco.App.Web.Stores
             bool isRequiredStoreType = false;
             string valueStoreType = pageHelper.getRequestParameterValue(StoresPageHelper.OldParameters.Type, out isRequiredStoreType);//тип склада
             bool isRequiredStoreActual = false;
-            string valueStoreActual = pageHelper.getRequestParameterValue(StoresPageHelper.OldParameters.Actual, out isRequiredStoreActual);//склад 1-действующий, 0 - недействующий
+            string valueStoreActual = pageHelper.getRequestParameterValue(StoresPageHelper.OldParameters.Actual, out isRequiredStoreActual); //склад 1-действующий, 0 - недействующий, дата  
             bool isRequiredStoreNoName = false;
             string valueStoreNoName = pageHelper.getRequestParameterValue(StoresPageHelper.OldParameters.NoName, out isRequiredStoreNoName);//Использовать имя склада при поиске
             bool isRequiredStoreSize = false;
@@ -841,10 +842,28 @@ namespace Kesco.App.Web.Stores
                     dateValidPeriodFilter.IsDisabled = dateValidPeriod.IsDisabled;
                     */
 
-                    dateValidPeriodFilter.Value = valueStoreActual == "1" ? "0" : "1";//dateValidPeriodFilter.FilterOptions
-                    dateValid.ValueDate = DateTime.Now;
-                    //if (!dateValid.IsDisabled)
-                    //    dateValid.IsDisabled = isRequiredStoreActual;
+                    DateTime value;
+                    if (DateTime.TryParseExact(valueStoreActual, "yyyyMMdd", new CultureInfo("en-US"), DateTimeStyles.None, out value))
+                    {
+                        dateValid.ValueDate = value;
+                        dateValidPeriodFilter.Value = "0";
+                    }
+                    else if (valueStoreActual == "1")
+                    {
+                        dateValid.ValueDate = DateTime.Today;
+                        dateValidPeriodFilter.Value = "0";
+                    }
+                    else if (valueStoreActual == "0")
+                    {
+                        dateValid.ValueDate = DateTime.Today;
+                        dateValidPeriodFilter.Value = "1";
+                    }
+                    else
+                    {
+                        dateValid.ValueDate = null;
+                        dateValidPeriodFilter.Value = "1";
+                        dateValid.IsDisabled = true;
+                    }
 
                     if (!dateValid.IsReadOnly)
                         dateValid.IsReadOnly = isRequiredStoreActual;
@@ -955,7 +974,7 @@ namespace Kesco.App.Web.Stores
         /// </summary>
         private void SetMenuButtons()
         {
-            Button btnSearch = new Button
+            var btnSearch = new Button
             {
                 ID = "btnSearch",
                 V4Page = this,
@@ -966,7 +985,7 @@ namespace Kesco.App.Web.Stores
                 OnClick = "SearchStore();"
             };
 
-            Button btnClear = new Button
+            var btnClear = new Button
             {
                 ID = "btnClear",
                 V4Page = this,
@@ -977,7 +996,7 @@ namespace Kesco.App.Web.Stores
                 OnClick = "ClearSearchForm();"
             };
 
-            Button btnNew = new Button
+            var btnNew = new Button
             {
                 ID = "btnNew",
                 V4Page = this,
@@ -988,7 +1007,7 @@ namespace Kesco.App.Web.Stores
                 OnClick = "cmd('cmd', 'NewButton');"
             };
 
-            Button btnSettings = new Button
+            var btnSettings = new Button
             {
                 ID = "btnSetup",
                 V4Page = this,
@@ -999,7 +1018,7 @@ namespace Kesco.App.Web.Stores
                 OnClick = "SetupForm();"
             };
 
-            Button btnCancel = new Button
+            var btnCancel = new Button
             {
                 ID = "btnCancel",
                 V4Page = this,
@@ -1012,7 +1031,7 @@ namespace Kesco.App.Web.Stores
                 OnClick = "cmd('cmd', 'CancelButton');"
             };
 
-            Button[] buttons = new Button[] { btnSearch, btnClear, btnNew, btnSettings, btnCancel };
+            var buttons = new[] { btnSearch, btnClear, btnNew, btnSettings, btnCancel };
 
             AddMenuButton(buttons);
         }
@@ -1585,7 +1604,7 @@ SELECT КодЛица FROM vwКарточкиЮрЛиц AS Карточки WHER
                  qb.sqlParams.Add("@Valid", objValid);
              }
 
-            _table.sqlParams = qb.sqlParams;
+            _table.SqlParams = qb.sqlParams;
             _table.sqlCmd = qb.Text;
 
             //pageBar.CurrentPageNumber = 1;
