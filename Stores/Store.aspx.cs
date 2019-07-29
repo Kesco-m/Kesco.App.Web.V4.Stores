@@ -1,473 +1,78 @@
 ﻿using System;
-using System.Data;
-using System.IO;
-using System.Web;
-
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-
-using Kesco.Lib.DALC;
-using Kesco.Lib.Log;
-
+using System.Data;
+using System.IO;
 using Kesco.Lib.BaseExtention;
-using Kesco.Lib.BaseExtention.Enums.Docs;
 using Kesco.Lib.BaseExtention.Enums.Controls;
-
+using Kesco.Lib.BaseExtention.Enums.Docs;
+using Kesco.Lib.DALC;
+using Kesco.Lib.Entities;
+using Kesco.Lib.Entities.Documents;
+using Kesco.Lib.Entities.Stores;
+using Kesco.Lib.Log;
 using Kesco.Lib.Web.Controls.V4;
 using Kesco.Lib.Web.Controls.V4.Common;
+using Kesco.Lib.Web.DBSelect.V4;
 using Kesco.Lib.Web.Settings;
 using Kesco.Lib.Web.Settings.Parameters;
-using Kesco.Lib.Web.DBSelect.V4;
-using Kesco.Lib.Entities.Stores;
-using Kesco.Lib.Entities.Documents;
-using System.Text.RegularExpressions;
-
+using Item = Kesco.Lib.Entities.Item;
+using SQLQueries = Kesco.Lib.Entities.SQLQueries;
 
 namespace Kesco.App.Web.Stores
 {
     /// <summary>
-    /// Класс объекта представляющего страницу редактирования склада
+    ///     Класс объекта представляющего страницу редактирования склада
     /// </summary>
     public partial class Store : EntityPage
     {
-        //Вспомогательный объект для сохранения и восстановления размеров и положения окна
-        private WndSizePosKeeper _SizePosKeeper;
-
-        //Код склада, свойства которого отображаются на странице, склад будет модифицирован при сохранении 
-        private int _storeId = 0;
-
-        //Предварительно загруженный список допустимых типов складов, для быстрого извлечения допустимых ресурсов склада
-        private List<StoreType> _storeTypesList=null;
-
-        //Идентификаторы отчетов по складам куда уже добавлен склад
-        private int[] _reportTypes;
-
         //Оригинальный запрос, для того что бы иметь возможность перезагруки страницы
         private Uri _origUrl;
-
-        //Исходные данные склада
-        private DataRow _source;
 
         //Исходный список отчетов по складам
         private string[] _reports;
 
+        //Идентификаторы отчетов по складам куда уже добавлен склад
+        private int[] _reportTypes;
+
+        //Вспомогательный объект для сохранения и восстановления размеров и положения окна
+        private WndSizePosKeeper _SizePosKeeper;
+
+        //Исходные данные склада
+        private DataRow _source;
+
+        //Код склада, свойства которого отображаются на странице, склад будет модифицирован при сохранении 
+        private int _storeId;
+
+        //Предварительно загруженный список допустимых типов складов, для быстрого извлечения допустимых ресурсов склада
+        private List<StoreType> _storeTypesList;
+
         //Параметр mvc в запроса
         public string mvc;
-
-        public override string HelpUrl { get; set; }
 
         public Store()
         {
             HelpUrl = "hlp/help_store.htm";
         }
 
-#region EventHandlers
-
-        protected void Page_Load(object sender, EventArgs e)
-        {
-            if (V4IsPostBack) return;
-            
-            _source = null;
-            _reports = null;
-            _origUrl = Request.Url;
-
-            mvc = Request.QueryString["mvc"];
-            if (string.IsNullOrWhiteSpace(mvc)) mvc = "0";
-
-            StoresClientScripts.InitializeGlobalVariables(this);
-
-            _storeTypesList = StoreType.GetList();
-
-            //btnAddToReport.Text = Resx.GetString("cmdAddToReport");
-            //btnDisplayReport.Text = Resx.GetString("cmdDisplayReport");
-
-            NameLabel.Value = Resx.GetString("STORE_Name") + '/' + Resx.GetString("STORE_Account");
-            KeeperBankLabel.Value = Resx.GetString("STORE_Keeper") + '/' + Resx.GetString("STORE_Bank");
-            ResourceLabel.Value = Resx.GetString("STORE_Resource") + '/' + Resx.GetString("STORE_Currency");
-            StoreDepartmentLabel.Value = Resx.GetString("STORE_Department") + '/' + Resx.GetString("STORE_Branch");
-
-            string strStoreId = Request.QueryString["id"];
-
-            if (null != strStoreId && (_storeId = strStoreId.ToInt()) != 0)
-            {
-                Title = string.IsNullOrEmpty(Title) ? Resx.GetString("STORE_EditStoreTitle") : Title;
-
-                Dictionary<string, object> sqlParams = new Dictionary<string, object>();
-                sqlParams.Add("@КодСклада", (object)_storeId);
-
-                DataTable dt = DBManager.GetData(Kesco.Lib.Entities.SQLQueries.SELECT_СкладПараметры, Config.DS_person, CommandType.Text, sqlParams);
-
-                if (null != dt && dt.Rows.Count > 0 && null != dt.Rows[0])
-                {
-                    DataRow r = dt.Rows[0];
-                    _source = r;
-                    object dbObj = r["КодСклада"];
-                    if (DBNull.Value != dbObj && _storeId == (int)dbObj)
-                    {
-                        dbObj = r["Склад"];
-                        if (DBNull.Value != dbObj) txtName.Value = (string)dbObj;
-
-                        dbObj = r["IBAN"];
-                        if (DBNull.Value != dbObj) txtIBAN.Value = (string)dbObj;
-
-                        dbObj = r["От"];
-                        if (DBNull.Value != dbObj)
-                            dateValidFrom.ValueDate = (DateTime)dbObj;
-
-                        dbObj = r["По"];
-                        if (DBNull.Value != dbObj)
-                            dateValidTo.ValueDate = (DateTime)dbObj;
-
-                        dbObj = r["КодТипаСклада"];
-                        if (DBNull.Value != dbObj) sStoreType.ValueInt = (int)dbObj;
-
-                        dbObj = r["КодМестаХранения"];
-                        if (DBNull.Value != dbObj) sStorage.ValueInt = (int)dbObj;
-
-                        dbObj = r["КодРесурса"];
-                        if (DBNull.Value != dbObj)
-                        {
-                            sResource.ValueInt = (int)dbObj;
-
-                            //sStoreReportType.GetFilter().ResourceId.Value = sResource.Value;
-                        }
-
-                        dbObj = r["КодХранителя"];
-                        if (DBNull.Value != dbObj)
-                        {
-                            sKeeperBank.ValueInt = (int)dbObj;
-
-                            //sStoreReportType.GetFilter().PcId.Add(sKeeperBank.Value);
-                        }
-
-                        dbObj = r["КодРаспорядителя"];
-                        if (DBNull.Value != dbObj)
-                        {
-                            sManager.ValueInt = (int)dbObj;
-
-                            //sStoreReportType.GetFilter().PcId.Add(sManager.Value);
-                        }
-
-                        dbObj = r["КодПодразделенияРаспорядителя"];
-                        if (DBNull.Value != dbObj) sManagerDepartment.ValueInt = (int)dbObj;
-
-                        dbObj = r["КодДоговора"];
-                        if (DBNull.Value != dbObj) sAgreement.ValueInt = (int)dbObj;
-
-                        dbObj = r["Филиал"];
-                        if (DBNull.Value != dbObj) txtStoreDepartment.Value = (string)dbObj;
-
-                        dbObj = r["Примечание"];
-                        if (DBNull.Value != dbObj) txtDescription.Value = (string)dbObj;
-
-                        /*
-                        string strDivChangedByAt = string.Empty;
-                        dbObj = r["Изменил"];
-                        if (DBNull.Value != dbObj) strDivChangedByAt = Resx.GetString("lblChangedBy") + ": " + (string)dbObj;//(new Employee(employee_id.ToString())).FullName;
-
-                        dbObj = r["Изменено"];
-                        if (DBNull.Value != dbObj)
-                        {
-                            if (strDivChangedByAt.Length>0)
-                                strDivChangedByAt += " " + ((DateTime)dbObj).ToString();
-                            else
-                                strDivChangedByAt = Resx.GetString("lblChanged") + ": " + ((DateTime)dbObj).ToString();
-                            //DivChangedAt.Value = Resx.GetString("lblChanged") + ": " + ((DateTime)dbObj).ToString();
-                        }
-
-                        DivChangedByAt.Value = strDivChangedByAt;
-                        */
-
-                        DivChangedByAt.SetChangeDateTime = (DateTime?)r["Изменено"];
-                        DivChangedByAt.ChangedByID = (int?)r["Изменил"];
-                    }
-                }
-                else
-                {
-                    _storeId = 0;
-                }
-            }
-            else
-            {
-                Title = string.IsNullOrEmpty(Title)? Resx.GetString("STORE_CreateStoreTitle"):Title;
-
-                //Из БД параметры не загружаются
-                StoresPageHelper pageHelper = new StoresPageHelper(Request, null /*new AppParamsManager(this.ClId, StoresPageHelper.StoreParameterNamesCollection)*/);
-
-                bool isRequired = false;
-                dateValidFrom.Value = pageHelper.getParameterValue(StoresPageHelper.StoreParameters.ValidFrom, out isRequired, string.Empty/*DateTime.Now.ToString("dd.MM.yyyy")*/);
-                dateValidFrom.IsDisabled = isRequired;
-
-                dateValidTo.Value = pageHelper.getParameterValue(StoresPageHelper.StoreParameters.ValidTo, out isRequired, dateValidFrom.Value);
-                dateValidTo.IsDisabled = isRequired;
-
-                pageHelper.setSelectCtrlParameterValue(sStoreType, null, StoresPageHelper.StoreParameters.Type);
-
-                pageHelper.setTextBoxParameterValue(txtName, null, StoresPageHelper.StoreParameters.Name);
-                pageHelper.setTextBoxParameterValue(txtIBAN, null, StoresPageHelper.StoreParameters.Iban);
-
-                //Имя склада обязательно
-                if (txtName.IsReadOnly)
-                {
-                    chkAccountNumberUnknown.IsReadOnly = true;
-                }
-
-                string checkBoxValue = pageHelper.getParameterValue(StoresPageHelper.StoreParameters.AccountNumberUnknown, out isRequired, "0");
-                chkAccountNumberUnknown.Checked = checkBoxValue == "1";
-                chkAccountNumberUnknown.IsDisabled = isRequired;
-
-                pageHelper.setSelectCtrlParameterValue(sKeeperBank, null, StoresPageHelper.StoreParameters.Keeper);
-                pageHelper.setSelectCtrlParameterValue(sManager, null, StoresPageHelper.StoreParameters.Manager);
-                pageHelper.setSelectCtrlParameterValue(sManagerDepartment, null, StoresPageHelper.StoreParameters.ManagerDepartment);
-                pageHelper.setSelectCtrlParameterValue(sResource, null, StoresPageHelper.StoreParameters.Resource);
-
-                txtStoreDepartment.Value = pageHelper.getParameterValue(StoresPageHelper.StoreParameters.Department, out isRequired, String.Empty);
-                txtStoreDepartment.IsDisabled = isRequired;
-
-                txtDescription.Value = pageHelper.getParameterValue(StoresPageHelper.StoreParameters.Description, out isRequired, String.Empty);
-                txtDescription.IsDisabled = isRequired;
-
-                if (!TryOldParameters(pageHelper))
-                {
-                    pageHelper.setSelectCtrlParameterValue(sStorage, null, StoresPageHelper.StoreParameters.Storage);
-                    pageHelper.setSelectCtrlParameterValue(sAgreement, null, StoresPageHelper.StoreParameters.Agreement);
-                }
-            }
-
-            if (txtName.Value == StoreNameTextBox.NoNameValue)
-            {
-                chkAccountNumberUnknown.Checked = true;
-                SetStoreNumberUndefined(true);
-            }
-
-            int storeTypeID = 0;
-            if (int.TryParse(sStoreType.Value, out storeTypeID))
-                SetStoreType(storeTypeID);
-
-            sStoreReportType.URLShowEntity = Config.store_report;
-            if (_storeId != 0)
-                sStoreReportType.URLShowEntity += string.Format("?selected={0}", _storeId);
-
-            //DisplayReport();
-            DisplayStoreReportTypes();
-
-            _SizePosKeeper = new WndSizePosKeeper(this, StoresPageHelper.WindowParameters.Left, StoresPageHelper.WindowParameters.Top, StoresPageHelper.WindowParameters.Width, StoresPageHelper.WindowParameters.Height);
-            _SizePosKeeper.OnLoad();
-
-            //Не показываем виртуальные склады
-            sStoreType.Filter.IDs.IsException = true;
-            sStoreType.Filter.IDs.Set("-1");
-
-            //Оба лица должны присутствовать в договорах организации склада
-            sAgreement.Filter.PersonIDs.UseAndOperator = true;
-
-            dateValidFrom.OnRenderNtf += new RenderNtfDelegate(dateValidFrom_OnRenderNtf);
-            dateValidTo.OnRenderNtf += new RenderNtfDelegate(dateValidTo_OnRenderNtf);
-        }
-
-        void dateValidTo_OnRenderNtf(object sender, Ntf ntf)
-        {
-            ntf.Clear();
-            DateTime to = dateValidTo.ValueDate.GetValueOrDefault(DateTime.MaxValue);
-            DateTime from = dateValidFrom.ValueDate.GetValueOrDefault(DateTime.MinValue);
-
-            if (to < DateTime.Now)
-                ntf.Add(Resx.GetString("STORE_ToInPast"), NtfStatus.Information);
-
-            if (to < from)
-                ntf.Add(Resx.GetString("STORE_DatesAreNotValid"), NtfStatus.Error);
-        }
-
-        void dateValidFrom_OnRenderNtf(object sender, Ntf ntf)
-        {
-            DateTime from = dateValidFrom.ValueDate.GetValueOrDefault(DateTime.MinValue);
-
-            if (from > DateTime.Now)
-                ntf.Add(Resx.GetString("STORE_FromInFuture"), NtfStatus.Information);
-
-            dateValidTo.RenderNtf();
-        }
-
-        //public override bool OnBeforeClose()
-        //{
-            //Для работы _SizePosKeeper
-            //return false;
-        //}
-
-        protected void OnStoreNumberUndefinedChanged(object sender, ProperyChangedEventArgs e)
-        {
-            SetStoreNumberUndefined(e.NewValue != "0");
-
-            //Исправление непонятного поведения при нажатии кнопки сразу после загрузки
-            V4SetFocus("chkAccountNumberUnknown");
-        }
-
-        protected void OnResourceBeforeSearch(object sender)
-        {
-            if (string.IsNullOrWhiteSpace(sStoreType.Value))
-                sResource.Filter.AllChildrenWithParentIDs.Clear();
-            else
-            {
-                StoreType st = _storeTypesList.Find(t => { return t.Id == sStoreType.Value; });
-                if (null == st)
-                    sResource.Filter.AllChildrenWithParentIDs.Clear();
-                else
-                    sResource.Filter.AllChildrenWithParentIDs.Value = st.RootSource;
-            }
-        }
-
-        protected void OnManagerDepartmentBeforeSearch(object sender)
-        {
-            sManagerDepartment.GetFilter().PcId.Set(sManager.Value);
-            sManagerDepartment.GetFilter().PcId.CompanyHowSearch = "0";
-        }
-
-        protected void OnAgreementBeforeSearch(object sender)
-        {
-            sAgreement.Filter.Type.Clear();
-
-            int storeTypeID = sStoreType.Value.ToInt();
-            sAgreement.Filter.Type.Add(new DocTypeParam() { DocTypeEnum = Kesco.Lib.BaseExtention.Enums.Docs.DocTypeEnum.ДоговорХранения, QueryType = DocTypeQueryType.WithChildrenSynonyms });
-            sAgreement.Filter.Type.Add(new DocTypeParam() { DocTypeEnum = Kesco.Lib.BaseExtention.Enums.Docs.DocTypeEnum.ДоговорТранспортировки, QueryType = DocTypeQueryType.WithChildrenSynonyms });
-            sAgreement.Filter.Type.Add(new DocTypeParam() { DocTypeEnum = Kesco.Lib.BaseExtention.Enums.Docs.DocTypeEnum.ДоговорПодряда, QueryType = DocTypeQueryType.WithChildrenSynonyms });
-
-            if (storeTypeID < 11)
-                sAgreement.Filter.Type.Add(new DocTypeParam() { DocTypeEnum = Kesco.Lib.BaseExtention.Enums.Docs.DocTypeEnum.ДоговорОказанияУслуг, QueryType = DocTypeQueryType.WithChildrenSynonyms });
-
-            int managerId = sManager.Value.ToInt();
-            int keeperId = sKeeperBank.Value.ToInt();
-
-            sAgreement.Filter.PersonIDs.Clear();
-
-            if (managerId != 0)
-                sAgreement.Filter.PersonIDs.Add(managerId.ToString());
-
-            if (keeperId != 0)
-                sAgreement.Filter.PersonIDs.Add(keeperId.ToString());
-        }
-
-        protected void OnReportTypeBeforeSearch(object sender)
-        {
-            if (null != sResource.ValueInt)
-                sStoreReportType.GetFilter().ResourceId.Value = sResource.Value;
-            else
-                sStoreReportType.GetFilter().ResourceId.Clear();
-
-            sStoreReportType.GetFilter().PcId.Clear();
-
-            if (null != sKeeperBank.ValueInt)
-                sStoreReportType.GetFilter().PcId.Add(sKeeperBank.Value);
-
-            if (null != sManager.ValueInt)
-                sStoreReportType.GetFilter().PcId.Add(sManager.Value);
-        }
-
-        /*
-        protected void OnReportTypeChanged(object sender, ProperyChangedEventArgs e)
-        {
-            btnAddToReport.Visible = !IsStoreInReport();
-            btnDisplayReport.Visible = !btnAddToReport.Visible;
-        }
-        */
-
-        protected void OnStoreTypeChanged(object sender, ProperyChangedEventArgs e)
-        {
-            if (e.NewValue == null)
-            {
-                return;
-            }
-
-            if (e.NewValue.Equals(e.OldValue)) return;
-
-            int storeTypeID = 0;
-            if (int.TryParse(e.NewValue, out storeTypeID))
-                SetStoreType(storeTypeID);
-        }
-
-        protected void OnStoreNameChanged(object sender, ProperyChangedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(e.NewValue))
-            {
-                return;
-            }
-
-            sKeeperBank.Focus();
-
-        }
-
-        protected void OnStoreIbanChanged(object sender, ProperyChangedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(e.NewValue))
-            {
-                return;
-            }
-
-            sKeeperBank.Focus();
-
-        }
-
-        protected void OnManagerChanged(object sender, ProperyChangedEventArgs e)
-        {
-            sManagerDepartment.ClearSelectedItems();
-            sManagerDepartment.Value = null;
-
-            //sAgreement.ClearSelectedItems();
-            //sAgreement.Value = null;
-
-            GetKeeperManagerFromsAgreement();
-
-            int KeeperCode = sKeeperBank.Value.ToInt();
-            int ManagerCode = sManager.Value.ToInt();
-
-            sAgreement.Visible =
-                (KeeperCode != ManagerCode || KeeperCode == 0 || ManagerCode == 0) && (sStoreType.Value.Length == 0 ||
-                                                                                       sStoreType.Value.Length > 0 &&
-                                                                                       sStoreType.ValueInt > 20);
-            if (sAgreement.Visible) Display("StoreAgreementRow");
-            else Hide("StoreAgreementRow");
-        }
-
-        protected void OnKeeperChanged(object sender, ProperyChangedEventArgs e)
-        {
-            //sAgreement.ClearSelectedItems();
-            //sAgreement.Value = null;
-
-            GetKeeperManagerFromsAgreement();
-
-            int KeeperCode = sKeeperBank.Value.ToInt();
-            int ManagerCode = sManager.Value.ToInt();
-
-            sAgreement.Visible = (KeeperCode != ManagerCode || KeeperCode == 0 || ManagerCode == 0) && (sStoreType.Value.Length == 0 ||
-                                                                                                        sStoreType.Value.Length > 0 &&
-                                                                                                        sStoreType.ValueInt > 20);
-            if (sAgreement.Visible) Display("StoreAgreementRow");
-            else Hide("StoreAgreementRow");
-        }
-
-        protected void OnAgreementChanged(object sender, ProperyChangedEventArgs e)
-        {
-            GetKeeperManagerFromsAgreement();
-        }
-
-#endregion
+        public override string HelpUrl { get; set; }
 
         /// <summary>
-        /// Устанавливает распорядителя и хранителя склада в соответсвие с установленным договором хранения
+        ///     Устанавливает распорядителя и хранителя склада в соответсвие с установленным договором хранения
         /// </summary>
-        void GetKeeperManagerFromsAgreement()
+        private void GetKeeperManagerFromsAgreement()
         {
             if (sAgreement.Value.ToInt() == 0) return;
 
-            bool noKeeper = string.IsNullOrEmpty(sKeeperBank.Value);
-            bool noManager = string.IsNullOrEmpty(sManager.Value);
+            var noKeeper = string.IsNullOrEmpty(sKeeperBank.Value);
+            var noManager = string.IsNullOrEmpty(sManager.Value);
             if (!noKeeper && !noManager) return;
 
-            Document doc = sAgreement.GetObjectById(sAgreement.Value) as Document;
+            var doc = sAgreement.GetObjectById(sAgreement.Value) as Document;
             if (doc.DataUnavailable)
             {
                 //List<DocPersons> persons = DocPersons.GetDocsPersonsByDocId(sAgreement.Value.ToInt);
-                List<int> persons = DocPersons.LoadPersonsByDocId(sAgreement.Value.ToInt());
+                var persons = DocPersons.LoadPersonsByDocId(sAgreement.Value.ToInt());
                 if (persons.Count == 2
                     && persons[0] != 0
                     && persons[1] != 0
@@ -475,70 +80,69 @@ namespace Kesco.App.Web.Stores
                 {
                     if (noKeeper)
                     {
-                        int ManagerId = sManager.Value.ToInt();
+                        var ManagerId = sManager.Value.ToInt();
 
                         if (ManagerId == persons[1])
                             sKeeperBank.Value = persons[0].ToString();
-                        else
-                            if (ManagerId == persons[0])
-                                sKeeperBank.Value = persons[1].ToString();
+                        else if (ManagerId == persons[0])
+                            sKeeperBank.Value = persons[1].ToString();
                     }
 
                     if (noManager)
                     {
-                        int KeeperBankId = sKeeperBank.Value.ToInt();
+                        var KeeperBankId = sKeeperBank.Value.ToInt();
 
                         if (KeeperBankId == persons[1])
                             sManager.Value = persons[0].ToString();
-                        else
-                            if (KeeperBankId == persons[0])
-                                sManager.Value = persons[1].ToString();
+                        else if (KeeperBankId == persons[0])
+                            sManager.Value = persons[1].ToString();
                     }
                 }
             }
             else
             {
-                if (doc.DocumentData.PersonId3 == null && doc.DocumentData.PersonId4 == null && doc.DocumentData.PersonId5 == null && doc.DocumentData.PersonId6 == null)
-                {
+                if (doc.DocumentData.PersonId3 == null && doc.DocumentData.PersonId4 == null &&
+                    doc.DocumentData.PersonId5 == null && doc.DocumentData.PersonId6 == null)
                     if (doc.DocumentData.PersonId1 != doc.DocumentData.PersonId2)
                     {
                         if (noKeeper && doc.DocumentData.PersonId1.HasValue)
-                        {
-                            if (noManager || (doc.DocumentData.PersonId2.HasValue && sManager.Value.ToInt() == doc.DocumentData.PersonId2))
+                            if (noManager || doc.DocumentData.PersonId2.HasValue &&
+                                sManager.Value.ToInt() == doc.DocumentData.PersonId2)
                                 sKeeperBank.Value = doc.DocumentData.PersonId1.ToString();
-                        }
 
                         if (noManager && doc.DocumentData.PersonId2.HasValue)
-                        {
-                            if (noKeeper || (doc.DocumentData.PersonId1.HasValue && sKeeperBank.Value.ToInt() == doc.DocumentData.PersonId1))
+                            if (noKeeper || doc.DocumentData.PersonId1.HasValue &&
+                                sKeeperBank.Value.ToInt() == doc.DocumentData.PersonId1)
                                 sManager.Value = doc.DocumentData.PersonId2.ToString();
-                        }
                     }
-                }
             }
         }
 
         /// <summary>
-        /// Метод пытается загрузить сохраненные параметры приложения Склады предыдущих версии
+        ///     Метод пытается загрузить сохраненные параметры приложения Склады предыдущих версии
         /// </summary>
         /// <param name="pageHelper">Вспомогательный объект</param>
         /// <returns>True исли установлены настройки от предыдущих версий приложения Склады</returns>
-        bool TryOldParameters(StoresPageHelper pageHelper)
+        private bool TryOldParameters(StoresPageHelper pageHelper)
         {
-            bool isRequiredStoreResidence = false;
-            string valueStoreResidence = pageHelper.getRequestParameterValue(StoresPageHelper.OldParameters.Residence, out isRequiredStoreResidence);//место хранения
-            bool isRequiredStoreContract = false;
-            string valueStoreContract = pageHelper.getRequestParameterValue(StoresPageHelper.OldParameters.Contract, out isRequiredStoreContract);//договор хранения
+            var isRequiredStoreResidence = false;
+            var valueStoreResidence = pageHelper.getRequestParameterValue(StoresPageHelper.OldParameters.Residence,
+                out isRequiredStoreResidence); //место хранения
+            var isRequiredStoreContract = false;
+            var valueStoreContract = pageHelper.getRequestParameterValue(StoresPageHelper.OldParameters.Contract,
+                out isRequiredStoreContract); //договор хранения
 
-            bool isOldParameters = null != valueStoreResidence || null != valueStoreContract;
+            var isOldParameters = null != valueStoreResidence || null != valueStoreContract;
 
             if (isOldParameters)
             {
                 if (null != valueStoreResidence)
-                    pageHelper.setSelectCtrlValue(sStorage, ((int)SelectEnum.Contain).ToString(), valueStoreResidence, isRequiredStoreResidence);
+                    pageHelper.setSelectCtrlValue(sStorage, ((int) SelectEnum.Contain).ToString(), valueStoreResidence,
+                        isRequiredStoreResidence);
 
                 if (null != valueStoreContract)
-                    pageHelper.setSelectCtrlValue(sAgreement, ((int)SelectEnum.Contain).ToString(), valueStoreContract, isRequiredStoreContract);
+                    pageHelper.setSelectCtrlValue(sAgreement, ((int) SelectEnum.Contain).ToString(), valueStoreContract,
+                        isRequiredStoreContract);
             }
 
             return isOldParameters;
@@ -659,10 +263,11 @@ namespace Kesco.App.Web.Stores
         }
          */
 
+
         /// <summary>
-        /// Метод формирует разметку панели инструментов страницы
+        ///     Метод формирует разметку панели инструментов страницы
         /// </summary>
-        public string RenderDocumentHeader()
+        protected string RenderDocumentHeader()
         {
             using (var w = new StringWriter())
             {
@@ -684,11 +289,11 @@ namespace Kesco.App.Web.Stores
         }
 
         /// <summary>
-        /// Метод формирует кнопки панели инструментов страницы
+        ///     Метод формирует кнопки панели инструментов страницы
         /// </summary>
         protected void SetMenuButtons()
         {
-            Button btnOk = new Button
+            var btnOk = new Button
             {
                 ID = "btnOK",
                 V4Page = this,
@@ -699,7 +304,7 @@ namespace Kesco.App.Web.Stores
                 OnClick = "SaveStore('ok');"
             };
 
-            Button btnSave = new Button
+            var btnSave = new Button
             {
                 ID = "btnSave",
                 V4Page = this,
@@ -710,7 +315,7 @@ namespace Kesco.App.Web.Stores
                 OnClick = "SaveStore('save');"
             };
 
-            Button btnRefresh = new Button
+            var btnRefresh = new Button
             {
                 ID = "btnRefresh",
                 V4Page = this,
@@ -718,10 +323,11 @@ namespace Kesco.App.Web.Stores
                 Title = Resx.GetString("cmdRefresh"),
                 IconJQueryUI = "v4_buttonIcons.Refresh",
                 Width = 105,
-                OnClick = "cmd('cmd', 'RefreshButton');"//"if(confirm('Replace')) window.location.replace(window.location.href);"
+                OnClick =
+                    "cmd('cmd', 'RefreshButton');" //"if(confirm('Replace')) window.location.replace(window.location.href);"
             };
 
-            Button btnCancel = new Button
+            var btnCancel = new Button
             {
                 ID = "btnCancel",
                 V4Page = this,
@@ -755,7 +361,7 @@ namespace Kesco.App.Web.Stores
             };
             */
 
-            Button exportTo1S = new Button
+            var exportTo1S = new Button
             {
                 ID = "btnTo1S",
                 V4Page = this,
@@ -766,7 +372,7 @@ namespace Kesco.App.Web.Stores
                 OnClick = "cmd('cmd', 'ExportButton');"
             };
 
-            Button btnClose = new Button
+            var btnClose = new Button
             {
                 ID = "btnClose",
                 V4Page = this,
@@ -777,24 +383,18 @@ namespace Kesco.App.Web.Stores
                 OnClick = "cmd('cmd', 'CloseButton');"
             };
 
-            Button[] buttons = new Button[] { btnOk, btnSave, btnRefresh, /*btnClear, btnDelete, */exportTo1S, btnCancel, btnClose };
+            Button[] buttons = {btnOk, btnSave, btnRefresh, /*btnClear, btnDelete, */exportTo1S, btnCancel, btnClose};
 
             if (_storeId == 0)
-            {
-                //btnDelete.Visible = false;
                 exportTo1S.Visible = false;
-            }
             else
-            {
-                //btnDelete.Visible = true;
                 exportTo1S.Visible = true;
-            }
 
             AddMenuButton(buttons);
         }
 
         /// <summary>
-        /// Метод добавляет склад в выбранные отчёты по складам, если он там отсутствует
+        ///     Метод добавляет склад в выбранные отчёты по складам, если он там отсутствует
         /// </summary>
         private bool SetStoreReportTypes()
         {
@@ -806,26 +406,25 @@ namespace Kesco.App.Web.Stores
                 return true;
             }
 
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            var parameters = new Dictionary<string, object>();
             parameters.Add("@КодСклада", _storeId);
-            parameters.Add("@КодыТиповОтчётаПоСкладам", (object)sStoreReportType.SelectedItemsString);
+            parameters.Add("@КодыТиповОтчётаПоСкладам", sStoreReportType.SelectedItemsString);
 
             try
             {
-                DBManager.ExecuteNonQuery(Kesco.Lib.Entities.SQLQueries.INSERT_СкладОтчётыПоСкладам, CommandType.Text, Config.DS_person, parameters);
+                DBManager.ExecuteNonQuery(SQLQueries.INSERT_СкладОтчётыПоСкладам, CommandType.Text, Config.DS_person,
+                    parameters);
 
                 //DBManager.ExecuteNonQuery(Kesco.Lib.Entities.SQLQueries.MERGE_СкладОтчётыПоСкладам, CommandType.Text, Config.DS_person, parameters);
 
                 _reports = new string[sStoreReportType.SelectedItems.Count];
-                int j=0;
-                foreach (Kesco.Lib.Entities.Item item in sStoreReportType.SelectedItems)
-                {
-                    _reports[j++] = item.Id;
-                }
+                var j = 0;
+                foreach (var item in sStoreReportType.SelectedItems) _reports[j++] = item.Id;
             }
             catch (DetailedException dex)
             {
-                ShowMessage(string.Format(Resx.GetString("STORE_FailedAddToReports"), dex.Message), Title, MessageStatus.Error, "ErrHandler");
+                ShowMessage(string.Format(Resx.GetString("STORE_FailedAddToReports"), dex.Message), Title,
+                    MessageStatus.Error, "ErrHandler");
                 return false;
             }
 
@@ -834,22 +433,23 @@ namespace Kesco.App.Web.Stores
 
 
         /// <summary>
-        /// Метод удаляет склад из всех отчетов кроме выбранных
+        ///     Метод удаляет склад из всех отчетов кроме выбранных
         /// </summary>
         private bool DeleteStoreReportTypes()
         {
             if (_storeId == 0) return true;
 
             object objReports = DBNull.Value;
-            if (null != sStoreReportType.SelectedItemsString) objReports=(object)sStoreReportType.SelectedItemsString;
+            if (null != sStoreReportType.SelectedItemsString) objReports = sStoreReportType.SelectedItemsString;
 
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            var parameters = new Dictionary<string, object>();
             parameters.Add("@КодСклада", _storeId);
             parameters.Add("@КодТипаОтчётаПоСкладам", objReports);
 
             try
             {
-                DBManager.ExecuteNonQuery(Kesco.Lib.Entities.SQLQueries.DELETE_СкладИзОтчётовПоСкладам, CommandType.Text, Config.DS_person, parameters);
+                DBManager.ExecuteNonQuery(SQLQueries.DELETE_СкладИзОтчётовПоСкладам, CommandType.Text, Config.DS_person,
+                    parameters);
             }
             catch (DetailedException dex)
             {
@@ -861,15 +461,15 @@ namespace Kesco.App.Web.Stores
         }
 
         /// <summary>
-        /// Метод устанавливает список отчетов по складам куда уже добавлен склад
+        ///     Метод устанавливает список отчетов по складам куда уже добавлен склад
         /// </summary>
-        void DisplayStoreReportTypes()
+        private void DisplayStoreReportTypes()
         {
             ReportPanel.Visible = false;
 
             //Проверка наличия роли сотрудника
-            IEnumerable list = sStoreReportType.FillSelect(string.Empty);
-            IEnumerator ir = list.GetEnumerator();
+            var list = sStoreReportType.FillSelect(string.Empty);
+            var ir = list.GetEnumerator();
             ir.Reset();
             ReportPanel.Visible = ir.MoveNext();
             if (!ReportPanel.Visible) return;
@@ -879,36 +479,35 @@ namespace Kesco.App.Web.Stores
 
             sStoreReportType.SelectedItems.Clear();
 
-            string rowNumber = "-1";
-            string pageNum = "-1";
-            string itemsPerPage = "-1";
-            string pageCount = "-1";
+            var rowNumber = "-1";
+            var pageNum = "-1";
+            var itemsPerPage = "-1";
+            var pageCount = "-1";
 
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            var parameters = new Dictionary<string, object>();
             parameters.Add("@КодСклада", _storeId);
 
-            DataTable dt = DBManager.GetData(Kesco.Lib.Entities.SQLQueries.SELECT_КодыТиповОтчётовПоСкладам, Config.DS_person, CommandType.Text, parameters, null, string.Empty, string.Empty, null, null, null, ref pageNum, ref itemsPerPage, ref pageCount, out rowNumber);
+            var dt = DBManager.GetData(SQLQueries.SELECT_КодыТиповОтчётовПоСкладам, Config.DS_person, CommandType.Text,
+                parameters, null, string.Empty, string.Empty, null, null, null, ref pageNum, ref itemsPerPage,
+                ref pageCount, out rowNumber);
 
             if (null != dt && dt.Rows.Count > 0)
             {
-                _reportTypes=new int[dt.Rows.Count];
-                for(int i=0; i<dt.Rows.Count; i++)
+                _reportTypes = new int[dt.Rows.Count];
+                for (var i = 0; i < dt.Rows.Count; i++)
                 {
-                    DataRow r = dt.Rows[i];
-                    _reportTypes[i]=(int)r["КодТипаОтчётаПоСкладам"];
-                    string strId = _reportTypes[i].ToString();
+                    var r = dt.Rows[i];
+                    _reportTypes[i] = (int) r["КодТипаОтчётаПоСкладам"];
+                    var strId = _reportTypes[i].ToString();
 
-                    object objReportTypeById = sStoreReportType.GetObjectById(strId);
-                    if (null!=objReportTypeById)
-                        sStoreReportType.SelectedItems.Add(new Kesco.Lib.Entities.Item { Id = strId, Value = objReportTypeById });
+                    var objReportTypeById = sStoreReportType.GetObjectById(strId);
+                    if (null != objReportTypeById)
+                        sStoreReportType.SelectedItems.Add(new Item {Id = strId, Value = objReportTypeById});
                 }
 
                 _reports = new string[sStoreReportType.SelectedItems.Count];
-                int j=0;
-                foreach (Kesco.Lib.Entities.Item item in sStoreReportType.SelectedItems)
-                {
-                    _reports[j++] = item.Id;
-                }
+                var j = 0;
+                foreach (var item in sStoreReportType.SelectedItems) _reports[j++] = item.Id;
             }
         }
 
@@ -919,31 +518,31 @@ namespace Kesco.App.Web.Stores
             switch (cmd)
             {
                 case "SaveButton":
+                {
+                    var strParam = param["param"];
+                    var StoreTypeCode = 0;
+                    var id = SaveStore(ref StoreTypeCode, strParam == "ok");
+                    if (id != -1)
                     {
-                        string strParam = param["param"];
-                        int StoreTypeCode = 0;
-                        int id = SaveStore(ref StoreTypeCode, strParam=="ok");
-                        if (id != -1)
-                        {
-                            //SavePageParameters();
-                        }
+                        //SavePageParameters();
                     }
+                }
                     break;
 
                 case "ExportButton":
+                {
+                    if (_storeId != 0)
                     {
-                        if (_storeId != 0)
-                        {
-                            int StoreTypeCode = 0;
-                            int id = _storeId;
-                            if (IsChanged())
-                                id = SaveStore(ref StoreTypeCode, false);
-                            else
-                                StoreTypeCode = sStoreType.Value.ToInt();
-                            if (id != -1)
-                                StoresClientScripts.ExportTo1S(this, id, StoreTypeCode);
-                        }
+                        var StoreTypeCode = 0;
+                        var id = _storeId;
+                        if (IsChanged())
+                            id = SaveStore(ref StoreTypeCode, false);
+                        else
+                            StoreTypeCode = sStoreType.Value.ToInt();
+                        if (id != -1)
+                            StoresClientScripts.ExportTo1S(this, id, StoreTypeCode);
                     }
+                }
                     break;
 
                 case "ClearButton":
@@ -952,9 +551,8 @@ namespace Kesco.App.Web.Stores
 
                 case "CloseButton":
                     if (IsChanged())
-                    {
-                        StoresClientScripts.ConfirmReload(this, Resx.GetString("STORE_ConfirmClose"), "", "CloseConfirmed");
-                    }
+                        StoresClientScripts.ConfirmReload(this, Resx.GetString("STORE_ConfirmClose"), "",
+                            "CloseConfirmed");
                     else
                         goto case "CloseConfirmed";
 
@@ -962,25 +560,21 @@ namespace Kesco.App.Web.Stores
 
                 case "CancelButton":
                     if (IsChanged())
-                    {
-                        StoresClientScripts.ConfirmReload(this, Resx.GetString("STORE_ConfirmCancel"), "", "ReloadConfirmed");
-                    }
+                        StoresClientScripts.ConfirmReload(this, Resx.GetString("STORE_ConfirmCancel"), "",
+                            "ReloadConfirmed");
                     break;
 
                 case "RefreshButton":
                     if (IsChanged())
-                    {
-                        StoresClientScripts.ConfirmReload(this, Resx.GetString("STORE_ConfirmRefresh"), "", "ReloadConfirmed");
-                    }
+                        StoresClientScripts.ConfirmReload(this, Resx.GetString("STORE_ConfirmRefresh"), "",
+                            "ReloadConfirmed");
                     else
-                    {
                         RefreshNtf();
-                    }
                     break;
 
                 case "CloseConfirmed":
                     _SizePosKeeper.ProcessCommand("PageClose", null);
-                    Close();
+                    V4DropWindow();
                     break;
 
                 case "ReloadConfirmed":
@@ -1004,7 +598,7 @@ namespace Kesco.App.Web.Stores
         }
 
         /// <summary>
-        /// Метод устанавливает свойства и значения полей при установке или отключении неизвестного номера счета
+        ///     Метод устанавливает свойства и значения полей при установке или отключении неизвестного номера счета
         /// </summary>
         /// <param name="value">true - установить, false - отключить</param>
         private void SetStoreNumberUndefined(bool value)
@@ -1013,17 +607,17 @@ namespace Kesco.App.Web.Stores
             //if (value)
             //    txtName.Value = StoreNameTextBox.NoNameValue;
 
-            int storeTypeID = 0;
-            bool fIban = false;
-            bool fBank = false;
+            var storeTypeID = 0;
+            var fIban = false;
+            var fBank = false;
             if (int.TryParse(sStoreType.Value, out storeTypeID))
             {
                 fIban = storeTypeID == 2;
-                fBank = storeTypeID>=1 && storeTypeID<=7;
+                fBank = storeTypeID >= 1 && storeTypeID <= 7;
             }
 
             //Номер счета не является обязательным если указан IBAN
-            txtName.IsRequired = !fBank || (!fIban && !chkAccountNumberUnknown.Checked);
+            txtName.IsRequired = !fBank || !fIban && !chkAccountNumberUnknown.Checked;
             txtName.IsDisabled = value;
             txtIBAN.IsDisabled = txtName.IsDisabled;
 
@@ -1032,48 +626,48 @@ namespace Kesco.App.Web.Stores
         }
 
         /// <summary>
-        /// Метод устанавливает свойства полей в соответсвии с типом склада
+        ///     Метод устанавливает свойства полей в соответсвии с типом склада
         /// </summary>
         /// <param name="storeTypeID">Тип выбранного склада</param>
-        void SetStoreType(int storeTypeID)
+        private void SetStoreType(int storeTypeID)
         {
-            bool fBank = false;
-            bool fIban = false;
-            bool fStorage = false;
-            bool fNoBankCurrency = false;//Для кассы и лицевого счёта необходимо показывать ресурс Валюта
-            bool fNameRequired = true;
+            var fBank = false;
+            var fIban = false;
+            var fStorage = false;
+            var fNoBankCurrency = false; //Для кассы и лицевого счёта необходимо показывать ресурс Валюта
+            var fNameRequired = true;
 
             switch (storeTypeID)
             {
-                case 2://Валютный счёт
+                case 2: //Валютный счёт
                     fIban = true;
-                    fNameRequired = false;//можно указать IBAN
+                    fNameRequired = false; //можно указать IBAN
                     goto case 1;
-                case 1://Расчетный счёт (руб.)
-                case 3://Валютный транзитный счёт
-                case 4://Валютный текущий счёт
-                case 5://Счёт в банке-корреспонденте
-                case 6://Спец. карточный счёт
-                case 7://Депозитный счёт
-                case 8://Специальный счёт (руб.)
+                case 1: //Расчетный счёт (руб.)
+                case 3: //Валютный транзитный счёт
+                case 4: //Валютный текущий счёт
+                case 5: //Счёт в банке-корреспонденте
+                case 6: //Спец. карточный счёт
+                case 7: //Депозитный счёт
+                case 8: //Специальный счёт (руб.)
                     fBank = true;
                     break;
 
-                case 11://Касса
-                case 12://Лицевой счёт
+                case 11: //Касса
+                case 12: //Лицевой счёт
                     fNoBankCurrency = true;
                     break;
 
-                case -1://Виртуальный склад
+                case -1: //Виртуальный склад
                     fNameRequired = false;
                     goto case 21;
-                case 21://Склад продуктов
-                case 22://Склад сырья и полуфабрикатов
-                case 23://Склад готовой продукции
+                case 21: //Склад продуктов
+                case 22: //Склад сырья и полуфабрикатов
+                case 23: //Склад готовой продукции
                     fStorage = true;
                     break;
                 default:
-                    sResource.Filter.AllChildrenWithParentIDs.Value = "2";//Товарно-материальные ценности (ТМЦ)
+                    sResource.Filter.AllChildrenWithParentIDs.Value = "2"; //Товарно-материальные ценности (ТМЦ)
                     break;
             }
 
@@ -1088,7 +682,7 @@ namespace Kesco.App.Web.Stores
             Display("IbanRow", fIban);
 
             //Номер счета не является обязательным если указан IBAN
-            txtName.IsRequired = !fBank || (!fIban && !chkAccountNumberUnknown.Checked);
+            txtName.IsRequired = !fBank || !fIban && !chkAccountNumberUnknown.Checked;
             txtName.IsDisabled = chkAccountNumberUnknown.Checked;
 
             //Для складов показывам поле Подразделения и Место хранения (обязательно)
@@ -1119,18 +713,16 @@ namespace Kesco.App.Web.Stores
                 Display("StoreAgreementRow");
             }
 
-            StoreType st = new StoreType(storeTypeID.ToString());
+            var st = new StoreType(storeTypeID.ToString());
 
             if (null != st.RootSource)
                 sResource.Filter.AllChildrenWithParentIDs.Value = st.RootSource;
             else
                 sResource.Filter.AllChildrenWithParentIDs.Clear();
 
-            if (1 == storeTypeID || 8 == storeTypeID)//Только рубль устанавливаем
-            {
+            if (1 == storeTypeID || 8 == storeTypeID) //Только рубль устанавливаем
                 if (string.IsNullOrWhiteSpace(sResource.Value))
                     sResource.Value = st.RootSource;
-            }
 
             if (fBank)
             {
@@ -1150,13 +742,12 @@ namespace Kesco.App.Web.Stores
 
                 StoreDepartmentLabel.Value = Resx.GetString("STORE_Department");
             }
-            
         }
 
         /// <summary>
-        /// Метод очистки всех полей формы и результатов поиска
+        ///     Метод очистки всех полей формы и результатов поиска
         /// </summary>
-        void ClearForm()
+        private void ClearForm()
         {
             //ReportPanel.Visible = false;
             //sStoreReportType.Value = null;
@@ -1168,7 +759,8 @@ namespace Kesco.App.Web.Stores
             txtStoreDepartment.Value = string.Empty;
             txtDescription.Value = string.Empty;
 
-            foreach (DBSelect s in new DBSelect[] { sStoreType, sStorage, sKeeperBank, sManager, sManagerDepartment, sResource, sAgreement })
+            foreach (var s in new DBSelect[]
+                {sStoreType, sStorage, sKeeperBank, sManager, sManagerDepartment, sResource, sAgreement})
             {
                 s.Value = null;
                 s.ClearSelectedItems();
@@ -1176,37 +768,35 @@ namespace Kesco.App.Web.Stores
         }
 
         /// <summary>
-        /// Медот формирует строку вида имя склада/IBAN для возврата в другие приложения
+        ///     Медот формирует строку вида имя склада/IBAN для возврата в другие приложения
         /// </summary>
         /// <param name="name">имя склада</param>
         /// <param name="iban">IBAN</param>
         /// <returns>строка вида имя склада/IBAN</returns>
-        string GetStoreReturnName(string name, string iban)
+        private string GetStoreReturnName(string name, string iban)
         {
-            bool n = !string.IsNullOrEmpty(name);
-            bool i = !string.IsNullOrEmpty(iban);
+            var n = !string.IsNullOrEmpty(name);
+            var i = !string.IsNullOrEmpty(iban);
 
             if (n && i) return name + '/' + iban;
-            else
-                if (i) return iban;
-                else
-                    if (n) return name;
+            if (i) return iban;
+            if (n) return name;
 
             return string.Empty;
         }
 
         /// <summary>
-        /// Сохраняет параметры склада в БД
+        ///     Сохраняет параметры склада в БД
         /// </summary>
         /// <returns>Идентификатор склада</returns>
-        int SaveStore(ref int StoreTypeCode, bool fClose)
+        private int SaveStore(ref int StoreTypeCode, bool fClose)
         {
             if (!V4Validation()) return -1;
 
             StoreTypeCode = sStoreType.Value.ToInt();
 
-            string Name="";
-            string Iban ="";
+            var Name = "";
+            var Iban = "";
             if (chkAccountNumberUnknown.Checked)
             {
                 Name = Iban = StoreNameTextBox.NoNameValue;
@@ -1214,24 +804,26 @@ namespace Kesco.App.Web.Stores
             else
             {
                 if (txtName.Value == StoreNameTextBox.NoNameValue)
-                    txtName.Value =  string.Empty;;
+                    txtName.Value = string.Empty;
+                ;
 
                 if (txtIBAN.Value == StoreNameTextBox.NoNameValue)
-                    txtIBAN.Value =  string.Empty;;
+                    txtIBAN.Value = string.Empty;
+                ;
 
                 Name = txtName.Value;
                 Iban = txtIBAN.Value;
             }
 
-            int StorageCode = sStorage.Value.ToInt();
-            int ResourceCode = sResource.Value.ToInt();
-            int KeeperCode = sKeeperBank.Value.ToInt();
-            int ManagerCode = sManager.Value.ToInt();
-            int ManagerDepartmentCode = sManagerDepartment.Value.ToInt();
-            int AgreementCode = sAgreement.Value.ToInt();
+            var StorageCode = sStorage.Value.ToInt();
+            var ResourceCode = sResource.Value.ToInt();
+            var KeeperCode = sKeeperBank.Value.ToInt();
+            var ManagerCode = sManager.Value.ToInt();
+            var ManagerDepartmentCode = sManagerDepartment.Value.ToInt();
+            var AgreementCode = sAgreement.Value.ToInt();
 
-            DateTime from = dateValidFrom.ValueDate.GetValueOrDefault(DateTime.MinValue);
-            DateTime to = dateValidTo.ValueDate.GetValueOrDefault(DateTime.MaxValue);
+            var from = dateValidFrom.ValueDate.GetValueOrDefault(DateTime.MinValue);
+            var to = dateValidTo.ValueDate.GetValueOrDefault(DateTime.MaxValue);
 
             if (to < from)
             {
@@ -1239,54 +831,57 @@ namespace Kesco.App.Web.Stores
                 return -1;
             }
 
-            Dictionary<string, object> sqlParams = new Dictionary<string, object>();
+            var sqlParams = new Dictionary<string, object>();
 
-            sqlParams.Add("@КодСклада", _storeId == 0 ? DBNull.Value : (object)_storeId);
-            sqlParams.Add("@КодХранителя", KeeperCode == 0 ? DBNull.Value : (object)KeeperCode);
-            sqlParams.Add("@КодРаспорядителя", ManagerCode == 0 ? DBNull.Value : (object)ManagerCode);
-            sqlParams.Add("@КодПодразделенияРаспорядителя", ManagerDepartmentCode == 0 ? DBNull.Value : (object)ManagerDepartmentCode);
+            sqlParams.Add("@КодСклада", _storeId == 0 ? DBNull.Value : (object) _storeId);
+            sqlParams.Add("@КодХранителя", KeeperCode == 0 ? DBNull.Value : (object) KeeperCode);
+            sqlParams.Add("@КодРаспорядителя", ManagerCode == 0 ? DBNull.Value : (object) ManagerCode);
+            sqlParams.Add("@КодПодразделенияРаспорядителя",
+                ManagerDepartmentCode == 0 ? DBNull.Value : (object) ManagerDepartmentCode);
 
             sqlParams.Add("@Склад", Name);
             sqlParams.Add("@IBAN", Iban);
 
-            sqlParams.Add("@КодТипаСклада", StoreTypeCode == 0 ? DBNull.Value : (object)StoreTypeCode);
-            sqlParams.Add("@КодМестаХранения", StorageCode == 0 ? DBNull.Value : (object)StorageCode);
+            sqlParams.Add("@КодТипаСклада", StoreTypeCode == 0 ? DBNull.Value : (object) StoreTypeCode);
+            sqlParams.Add("@КодМестаХранения", StorageCode == 0 ? DBNull.Value : (object) StorageCode);
 
             sqlParams.Add("@Филиал", txtStoreDepartment.Value);
             sqlParams.Add("@Примечание", txtDescription.Value);
 
-            sqlParams.Add("@КодРесурса", ResourceCode == 0 ? DBNull.Value : (object)ResourceCode);
+            sqlParams.Add("@КодРесурса", ResourceCode == 0 ? DBNull.Value : (object) ResourceCode);
 
             if (sAgreement.Visible)
-                sqlParams.Add("@КодДоговора", AgreementCode == 0 ? DBNull.Value : (object)AgreementCode);
+                sqlParams.Add("@КодДоговора", AgreementCode == 0 ? DBNull.Value : (object) AgreementCode);
 
-            sqlParams.Add("@От", from == DateTime.MinValue ? DBNull.Value : (object)from);
-            sqlParams.Add("@По", to == DateTime.MaxValue ? DBNull.Value : (object)to);
+            sqlParams.Add("@От", from == DateTime.MinValue ? DBNull.Value : (object) from);
+            sqlParams.Add("@По", to == DateTime.MaxValue ? DBNull.Value : (object) to);
 
-            Dictionary<string, object> outputParams = new Dictionary<string, object>();
+            var outputParams = new Dictionary<string, object>();
 
-            int storeId = 0;
+            var storeId = 0;
             try
             {
-                DBManager.ExecuteNonQuery(Kesco.Lib.Entities.SQLQueries.SP_Лица_InsUpd_Склады, CommandType.StoredProcedure, Config.DS_person, sqlParams, outputParams);
+                DBManager.ExecuteNonQuery(SQLQueries.SP_Лица_InsUpd_Склады, CommandType.StoredProcedure,
+                    Config.DS_person, sqlParams, outputParams);
 
                 if (outputParams.ContainsKey("@RETURN_VALUE"))
-                    storeId = (int)outputParams["@RETURN_VALUE"];
+                    storeId = (int) outputParams["@RETURN_VALUE"];
 
-                int origStoreId = _storeId;
+                var origStoreId = _storeId;
                 _storeId = storeId;
 
-                string storeUrl = _origUrl.AbsoluteUri;
+                var storeUrl = _origUrl.AbsoluteUri;
                 if (origStoreId == 0)
                 {
-                    int start_id = -1;
-                    if ((start_id = _origUrl.Query.IndexOf("?id=")) < 0 && (start_id = _origUrl.Query.IndexOf("&id=")) < 0)
+                    var start_id = -1;
+                    if ((start_id = _origUrl.Query.IndexOf("?id=")) < 0 &&
+                        (start_id = _origUrl.Query.IndexOf("&id=")) < 0)
                     {
                         //В запросе отсутствовал идентификатор склада
-                        storeUrl = _origUrl.Scheme + "://" + _origUrl.Host + _origUrl.AbsolutePath + "?id=" + storeId.ToString();
+                        storeUrl = _origUrl.Scheme + "://" + _origUrl.Host + _origUrl.AbsolutePath + "?id=" + storeId;
                         if (_origUrl.Query.Length > 0)
                         {
-                            if(_origUrl.Query[0] == '?')
+                            if (_origUrl.Query[0] == '?')
                                 storeUrl += "&" + _origUrl.Query.Substring(1);
                             else
                                 storeUrl += _origUrl.Query.Substring(1);
@@ -1294,9 +889,11 @@ namespace Kesco.App.Web.Stores
                     }
                     else
                     {
-                        int stop_id = _origUrl.Query.IndexOf('&', start_id + 4);
+                        var stop_id = _origUrl.Query.IndexOf('&', start_id + 4);
                         if (stop_id < 0) stop_id = _origUrl.Query.Length;
-                        storeUrl = _origUrl.Scheme + "://" + _origUrl.Host + _origUrl.AbsolutePath + _origUrl.Query.Substring(0, start_id + 4) + storeId.ToString() + _origUrl.Query.Substring(stop_id);
+                        storeUrl = _origUrl.Scheme + "://" + _origUrl.Host + _origUrl.AbsolutePath +
+                                   _origUrl.Query.Substring(0, start_id + 4) + storeId +
+                                   _origUrl.Query.Substring(stop_id);
                     }
                 }
 
@@ -1315,19 +912,14 @@ namespace Kesco.App.Web.Stores
 
                 if (fClose)
                 {
-                    string strReturnStoreName = GetStoreReturnName(Name, Iban);
+                    var strReturnStoreName = GetStoreReturnName(Name, Iban);
 
                     StoresClientScripts.NotifyParentWindow(this, storeId, strReturnStoreName);
 
-                    if (ReturnId == "1" || mvc=="1")
-                    {
+                    if (ReturnId == "1" || mvc == "1")
                         StoresClientScripts.ReturnValue(this, storeId, strReturnStoreName);
-                    }
                     else
-                    {
                         ProcessCommand("CloseConfirmed", null);
-                        //Close();
-                    }
                 }
                 else
                 {
@@ -1344,84 +936,102 @@ namespace Kesco.App.Web.Stores
         }
 
         /// <summary>
-        /// Сохранение последних значений полей страницы в БД настроек
+        ///     Сохранение последних значений полей страницы в БД настроек
         /// </summary>
-        void SavePageParameters()
+        private void SavePageParameters()
         {
-            AppParamsManager parametersManager = new AppParamsManager(this.ClId, new StringCollection());
+            var parametersManager = new AppParamsManager(ClId, new StringCollection());
 
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.ValidFrom, dateValidFrom.Value, AppParamType.SavedWithClid));
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.ValidTo, dateValidTo.Value, AppParamType.SavedWithClid));
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Type, sStoreType.Value, AppParamType.SavedWithClid));
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Storage, sStorage.Value, AppParamType.SavedWithClid));
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Name, txtName.Value, AppParamType.SavedWithClid));
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Iban, txtIBAN.Value, AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.ValidFrom,
+                dateValidFrom.Value, AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.ValidTo, dateValidTo.Value,
+                AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Type, sStoreType.Value,
+                AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Storage, sStorage.Value,
+                AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Name, txtName.Value,
+                AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Iban, txtIBAN.Value,
+                AppParamType.SavedWithClid));
 
-            string checkBoxValue = chkAccountNumberUnknown.Checked ? "1" : "0";
+            var checkBoxValue = chkAccountNumberUnknown.Checked ? "1" : "0";
 
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.AccountNumberUnknown, checkBoxValue, AppParamType.SavedWithClid));
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Keeper, sKeeperBank.Value, AppParamType.SavedWithClid));
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Manager, sManager.Value, AppParamType.SavedWithClid));
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.ManagerDepartment, sManagerDepartment.Value, AppParamType.SavedWithClid));
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Resource, sResource.Value, AppParamType.SavedWithClid));
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Agreement, sAgreement.Value, AppParamType.SavedWithClid));
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Department, txtStoreDepartment.Value, AppParamType.SavedWithClid));
-            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Description, txtDescription.Value, AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.AccountNumberUnknown,
+                checkBoxValue, AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Keeper, sKeeperBank.Value,
+                AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Manager, sManager.Value,
+                AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.ManagerDepartment,
+                sManagerDepartment.Value, AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Resource, sResource.Value,
+                AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Agreement, sAgreement.Value,
+                AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Department,
+                txtStoreDepartment.Value, AppParamType.SavedWithClid));
+            parametersManager.Params.Add(new AppParameter(StoresPageHelper.StoreParameters.Description,
+                txtDescription.Value, AppParamType.SavedWithClid));
 
             parametersManager.SaveParams();
         }
 
         /// <summary>
-        /// Возвращает true если значение поля (строка) равно исходному значению полученному из БД
+        ///     Возвращает true если значение поля (строка) равно исходному значению полученному из БД
         /// </summary>
         /// <param name="index"></param>
         /// <param name="str_value"></param>
         /// <returns></returns>
-        bool TestStringField(string index, string str_value)
+        private bool TestStringField(string index, string str_value)
         {
-            object dbObj = _source[index];
+            var dbObj = _source[index];
             if (string.IsNullOrWhiteSpace(str_value))
             {
                 if (DBNull.Value == dbObj) return true;
-                if (str_value == (string)dbObj) return true;
+                if (str_value == (string) dbObj) return true;
             }
-            else
-                if (str_value == (string)dbObj) return true;
+            else if (str_value == (string) dbObj)
+            {
+                return true;
+            }
 
             return false;
         }
 
         /// Возвращает true если значение поля (целое число) равно исходному значению полученному из БД
-        bool TestIntField(string index, int? n_value)
+        private bool TestIntField(string index, int? n_value)
         {
-            object dbObj = _source[index];
+            var dbObj = _source[index];
             if (DBNull.Value == dbObj)
             {
                 if (n_value == null || n_value == 0) return true;
             }
             else
             {
-                if (n_value.HasValue && n_value == (int)dbObj) return true;
+                if (n_value.HasValue && n_value == (int) dbObj) return true;
             }
 
             return false;
         }
 
         /// Возвращает true если значение поля (дата и время) равно исходному значению полученному из БД
-        bool TestDateField(string index, DateTime? dt_value)
+        private bool TestDateField(string index, DateTime? dt_value)
         {
-            object dbObj = _source[index];
+            var dbObj = _source[index];
             if (DBNull.Value == dbObj)
             {
                 if (dt_value == null) return true;
             }
-            else
-                if (dt_value == (DateTime)dbObj) return true;
+            else if (dt_value == (DateTime) dbObj)
+            {
+                return true;
+            }
 
             return false;
         }
 
-        bool IsChanged()
+        private bool IsChanged()
         {
             if (_source == null)
             {
@@ -1430,7 +1040,7 @@ namespace Kesco.App.Web.Stores
                 if (!string.IsNullOrWhiteSpace(txtStoreDepartment.Value)) return true;
                 if (!string.IsNullOrWhiteSpace(txtDescription.Value)) return true;
 
-                if (sStoreType.ValueInt.HasValue && sStoreType.ValueInt!=0) return true;
+                if (sStoreType.ValueInt.HasValue && sStoreType.ValueInt != 0) return true;
                 if (sResource.ValueInt.HasValue && sResource.ValueInt != 0) return true;
                 if (sKeeperBank.ValueInt.HasValue && sKeeperBank.ValueInt != 0) return true;
                 if (sManager.ValueInt.HasValue && sManager.ValueInt != 0) return true;
@@ -1458,20 +1068,447 @@ namespace Kesco.App.Web.Stores
             if (!TestStringField("Филиал", txtStoreDepartment.Value)) return true;
             if (!TestStringField("Примечание", txtDescription.Value)) return true;
 
-            if (sStoreReportType.SelectedItems != null && sStoreReportType.SelectedItems.Count>0)
+            if (sStoreReportType.SelectedItems != null && sStoreReportType.SelectedItems.Count > 0)
             {
                 if (_reports == null) return true;
                 if (sStoreReportType.SelectedItems.Count != _reports.Length) return true;
 
-                for(int i = 0 ; i<_reports.Length; i++)
-                {
-                    if (!sStoreReportType.SelectedItems.Exists(si => si.Id == _reports[i])) return true;
-                }
+                for (var i = 0; i < _reports.Length; i++)
+                    if (!sStoreReportType.SelectedItems.Exists(si => si.Id == _reports[i]))
+                        return true;
             }
-            else
-                if(_reports!=null && _reports.Length>0) return true;
+            else if (_reports != null && _reports.Length > 0)
+            {
+                return true;
+            }
 
             return false;
         }
+
+        #region EventHandlers
+
+        protected void ss()
+        {
+        }
+
+        protected override void EntityInitialization(Entity copy = null)
+        {
+        }
+
+
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (V4IsPostBack) return;
+
+            _source = null;
+            _reports = null;
+            _origUrl = Request.Url;
+
+            mvc = Request.QueryString["mvc"];
+            if (string.IsNullOrWhiteSpace(mvc)) mvc = "0";
+
+            StoresClientScripts.InitializeGlobalVariables(this);
+
+            _storeTypesList = StoreType.GetList();
+
+            //btnAddToReport.Text = Resx.GetString("cmdAddToReport");
+            //btnDisplayReport.Text = Resx.GetString("cmdDisplayReport");
+
+            NameLabel.Value = Resx.GetString("STORE_Name") + '/' + Resx.GetString("STORE_Account");
+            KeeperBankLabel.Value = Resx.GetString("STORE_Keeper") + '/' + Resx.GetString("STORE_Bank");
+            ResourceLabel.Value = Resx.GetString("STORE_Resource") + '/' + Resx.GetString("STORE_Currency");
+            StoreDepartmentLabel.Value = Resx.GetString("STORE_Department") + '/' + Resx.GetString("STORE_Branch");
+
+            var strStoreId = Request.QueryString["id"];
+
+            if (null != strStoreId && (_storeId = strStoreId.ToInt()) != 0)
+            {
+                Title = string.IsNullOrEmpty(Title) ? Resx.GetString("STORE_EditStoreTitle") : Title;
+
+                var sqlParams = new Dictionary<string, object>();
+                sqlParams.Add("@КодСклада", _storeId);
+
+                var dt = DBManager.GetData(SQLQueries.SELECT_СкладПараметры, Config.DS_person, CommandType.Text,
+                    sqlParams);
+
+                if (null != dt && dt.Rows.Count > 0 && null != dt.Rows[0])
+                {
+                    var r = dt.Rows[0];
+                    _source = r;
+                    var dbObj = r["КодСклада"];
+                    if (DBNull.Value != dbObj && _storeId == (int) dbObj)
+                    {
+                        dbObj = r["Склад"];
+                        if (DBNull.Value != dbObj) txtName.Value = (string) dbObj;
+
+                        dbObj = r["IBAN"];
+                        if (DBNull.Value != dbObj) txtIBAN.Value = (string) dbObj;
+
+                        dbObj = r["От"];
+                        if (DBNull.Value != dbObj)
+                            dateValidFrom.ValueDate = (DateTime) dbObj;
+
+                        dbObj = r["По"];
+                        if (DBNull.Value != dbObj)
+                            dateValidTo.ValueDate = (DateTime) dbObj;
+
+                        dbObj = r["КодТипаСклада"];
+                        if (DBNull.Value != dbObj) sStoreType.ValueInt = (int) dbObj;
+
+                        dbObj = r["КодМестаХранения"];
+                        if (DBNull.Value != dbObj) sStorage.ValueInt = (int) dbObj;
+
+                        dbObj = r["КодРесурса"];
+                        if (DBNull.Value != dbObj) sResource.ValueInt = (int) dbObj;
+
+                        dbObj = r["КодХранителя"];
+                        if (DBNull.Value != dbObj) sKeeperBank.ValueInt = (int) dbObj;
+
+                        dbObj = r["КодРаспорядителя"];
+                        if (DBNull.Value != dbObj) sManager.ValueInt = (int) dbObj;
+
+                        dbObj = r["КодПодразделенияРаспорядителя"];
+                        if (DBNull.Value != dbObj) sManagerDepartment.ValueInt = (int) dbObj;
+
+                        dbObj = r["КодДоговора"];
+                        if (DBNull.Value != dbObj) sAgreement.ValueInt = (int) dbObj;
+
+                        dbObj = r["Филиал"];
+                        if (DBNull.Value != dbObj) txtStoreDepartment.Value = (string) dbObj;
+
+                        dbObj = r["Примечание"];
+                        if (DBNull.Value != dbObj) txtDescription.Value = (string) dbObj;
+
+                        /*
+                        string strDivChangedByAt = string.Empty;
+                        dbObj = r["Изменил"];
+                        if (DBNull.Value != dbObj) strDivChangedByAt = Resx.GetString("lblChangedBy") + ": " + (string)dbObj;//(new Employee(employee_id.ToString())).FullName;
+
+                        dbObj = r["Изменено"];
+                        if (DBNull.Value != dbObj)
+                        {
+                            if (strDivChangedByAt.Length>0)
+                                strDivChangedByAt += " " + ((DateTime)dbObj).ToString();
+                            else
+                                strDivChangedByAt = Resx.GetString("lblChanged") + ": " + ((DateTime)dbObj).ToString();
+                            //DivChangedAt.Value = Resx.GetString("lblChanged") + ": " + ((DateTime)dbObj).ToString();
+                        }
+
+                        DivChangedByAt.Value = strDivChangedByAt;
+                        */
+
+                        DivChangedByAt.SetChangeDateTime = (DateTime?) r["Изменено"];
+                        DivChangedByAt.ChangedByID = (int?) r["Изменил"];
+                    }
+                }
+                else
+                {
+                    _storeId = 0;
+                }
+            }
+            else
+            {
+                Title = string.IsNullOrEmpty(Title) ? Resx.GetString("STORE_CreateStoreTitle") : Title;
+
+                //Из БД параметры не загружаются
+                var pageHelper = new StoresPageHelper(Request,
+                    null /*new AppParamsManager(this.ClId, StoresPageHelper.StoreParameterNamesCollection)*/);
+
+                var isRequired = false;
+                dateValidFrom.Value = pageHelper.getParameterValue(StoresPageHelper.StoreParameters.ValidFrom,
+                    out isRequired, string.Empty /*DateTime.Now.ToString("dd.MM.yyyy")*/);
+                dateValidFrom.IsDisabled = isRequired;
+
+                dateValidTo.Value = pageHelper.getParameterValue(StoresPageHelper.StoreParameters.ValidTo,
+                    out isRequired, dateValidFrom.Value);
+                dateValidTo.IsDisabled = isRequired;
+
+                var type = pageHelper.getParameterValue(StoresPageHelper.StoreParameters.Type, out isRequired, "");
+                if (type.Length > 0)
+                {
+                    pageHelper.setSelectCtrlParameterValue(sStoreType, null, StoresPageHelper.StoreParameters.Type);
+                }
+                else
+                {
+                    type = pageHelper.getParameterValue(StoresPageHelper.StoreParameters.KindType, out isRequired, "");
+                    if (type.Length > 0)
+                    {
+                        var typeInt = int.Parse(type);
+
+                        if (Math.Abs(typeInt) == 2)
+                        {
+                            sStoreType.Filter.IsWarehouseType.Enabled = true;
+                            if (typeInt < 0) sStoreType.Filter.IsWarehouseType.AddVirtual = true;
+                        }
+                        else
+                        {
+                            sStoreType.Filter.IsAccountType.Enabled = true;
+                            if (typeInt < 0) sStoreType.Filter.IsAccountType.AddVirtual = true;
+                        }
+                    }
+                }
+
+                pageHelper.setTextBoxParameterValue(txtName, null, StoresPageHelper.StoreParameters.Name);
+                if (string.IsNullOrEmpty(txtName.Value))
+                    pageHelper.setTextBoxParameterValue(txtName, null, StoresPageHelper.StoreParameters.Search);
+
+                pageHelper.setTextBoxParameterValue(txtIBAN, null, StoresPageHelper.StoreParameters.Iban);
+
+                //Имя склада обязательно
+                if (txtName.IsReadOnly) chkAccountNumberUnknown.IsReadOnly = true;
+
+                var checkBoxValue = pageHelper.getParameterValue(StoresPageHelper.StoreParameters.AccountNumberUnknown,
+                    out isRequired, "0");
+                chkAccountNumberUnknown.Checked = checkBoxValue == "1";
+                chkAccountNumberUnknown.IsDisabled = isRequired;
+
+                pageHelper.setSelectCtrlParameterValue(sKeeperBank, null, StoresPageHelper.StoreParameters.Keeper);
+                pageHelper.setSelectCtrlParameterValue(sManager, null, StoresPageHelper.StoreParameters.Manager);
+                pageHelper.setSelectCtrlParameterValue(sManagerDepartment, null,
+                    StoresPageHelper.StoreParameters.ManagerDepartment);
+                pageHelper.setSelectCtrlParameterValue(sResource, null, StoresPageHelper.StoreParameters.Resource);
+
+                txtStoreDepartment.Value = pageHelper.getParameterValue(StoresPageHelper.StoreParameters.Department,
+                    out isRequired, string.Empty);
+                txtStoreDepartment.IsDisabled = isRequired;
+
+                txtDescription.Value = pageHelper.getParameterValue(StoresPageHelper.StoreParameters.Description,
+                    out isRequired, string.Empty);
+                txtDescription.IsDisabled = isRequired;
+
+                if (!TryOldParameters(pageHelper))
+                {
+                    pageHelper.setSelectCtrlParameterValue(sStorage, null, StoresPageHelper.StoreParameters.Storage);
+                    pageHelper.setSelectCtrlParameterValue(sAgreement, null,
+                        StoresPageHelper.StoreParameters.Agreement);
+                }
+            }
+
+            if (txtName.Value == StoreNameTextBox.NoNameValue)
+            {
+                chkAccountNumberUnknown.Checked = true;
+                SetStoreNumberUndefined(true);
+            }
+
+            var storeTypeID = 0;
+            if (int.TryParse(sStoreType.Value, out storeTypeID))
+                SetStoreType(storeTypeID);
+
+            sStoreReportType.URLShowEntity = Config.store_report;
+            if (_storeId != 0)
+                sStoreReportType.URLShowEntity += string.Format("?selected={0}", _storeId);
+
+            //DisplayReport();
+            DisplayStoreReportTypes();
+
+            _SizePosKeeper = new WndSizePosKeeper(this, StoresPageHelper.WindowParameters.Left,
+                StoresPageHelper.WindowParameters.Top, StoresPageHelper.WindowParameters.Width,
+                StoresPageHelper.WindowParameters.Height);
+            _SizePosKeeper.OnLoad();
+
+            //Не показываем виртуальные склады
+            sStoreType.Filter.IDs.IsException = true;
+            sStoreType.Filter.IDs.Set("-1");
+
+            //Оба лица должны присутствовать в договорах организации склада
+            sAgreement.Filter.PersonIDs.UseAndOperator = true;
+
+            dateValidFrom.OnRenderNtf += dateValidFrom_OnRenderNtf;
+            dateValidTo.OnRenderNtf += dateValidTo_OnRenderNtf;
+        }
+
+        private void dateValidTo_OnRenderNtf(object sender, Ntf ntf)
+        {
+            ntf.Clear();
+            var to = dateValidTo.ValueDate.GetValueOrDefault(DateTime.MaxValue);
+            var from = dateValidFrom.ValueDate.GetValueOrDefault(DateTime.MinValue);
+
+            if (to < DateTime.Now)
+                ntf.Add(new Notification
+                    {Message = Resx.GetString("STORE_ToInPast"), Status = NtfStatus.Information, SizeIsNtf = true});
+
+            if (to < from)
+                ntf.Add(new Notification
+                    {Message = Resx.GetString("STORE_DatesAreNotValid"), Status = NtfStatus.Error, SizeIsNtf = true});
+        }
+
+        private void dateValidFrom_OnRenderNtf(object sender, Ntf ntf)
+        {
+            var from = dateValidFrom.ValueDate.GetValueOrDefault(DateTime.MinValue);
+
+            if (from > DateTime.Now)
+                ntf.Add(new Notification
+                    {Message = Resx.GetString("STORE_FromInFuture"), Status = NtfStatus.Information, SizeIsNtf = true});
+
+            dateValidTo.RenderNtf();
+        }
+
+        //public override bool OnBeforeClose()
+        //{
+        //Для работы _SizePosKeeper
+        //return false;
+        //}
+
+        protected void OnStoreNumberUndefinedChanged(object sender, ProperyChangedEventArgs e)
+        {
+            SetStoreNumberUndefined(e.NewValue != "0");
+
+            //Исправление непонятного поведения при нажатии кнопки сразу после загрузки
+            V4SetFocus("chkAccountNumberUnknown");
+        }
+
+        protected void OnResourceBeforeSearch(object sender)
+        {
+            if (string.IsNullOrWhiteSpace(sStoreType.Value))
+            {
+                sResource.Filter.AllChildrenWithParentIDs.Clear();
+            }
+            else
+            {
+                var st = _storeTypesList.Find(t => { return t.Id == sStoreType.Value; });
+                if (null == st)
+                    sResource.Filter.AllChildrenWithParentIDs.Clear();
+                else
+                    sResource.Filter.AllChildrenWithParentIDs.Value = st.RootSource;
+            }
+        }
+
+        protected void OnManagerDepartmentBeforeSearch(object sender)
+        {
+            sManagerDepartment.GetFilter().PcId.Set(sManager.Value);
+            sManagerDepartment.GetFilter().PcId.CompanyHowSearch = "0";
+        }
+
+        protected void OnAgreementBeforeSearch(object sender)
+        {
+            sAgreement.Filter.Type.Clear();
+
+            var storeTypeID = sStoreType.Value.ToInt();
+            sAgreement.Filter.Type.Add(new DocTypeParam
+                {DocTypeEnum = DocTypeEnum.ДоговорХранения, QueryType = DocTypeQueryType.WithChildrenSynonyms});
+            sAgreement.Filter.Type.Add(new DocTypeParam
+                {DocTypeEnum = DocTypeEnum.ДоговорТранспортировки, QueryType = DocTypeQueryType.WithChildrenSynonyms});
+            sAgreement.Filter.Type.Add(new DocTypeParam
+                {DocTypeEnum = DocTypeEnum.ДоговорПодряда, QueryType = DocTypeQueryType.WithChildrenSynonyms});
+
+            if (storeTypeID < 11)
+                sAgreement.Filter.Type.Add(new DocTypeParam
+                {
+                    DocTypeEnum = DocTypeEnum.ДоговорОказанияУслуг, QueryType = DocTypeQueryType.WithChildrenSynonyms
+                });
+
+            var managerId = sManager.Value.ToInt();
+            var keeperId = sKeeperBank.Value.ToInt();
+
+            sAgreement.Filter.PersonIDs.Clear();
+
+            if (managerId != 0)
+                sAgreement.Filter.PersonIDs.Add(managerId.ToString());
+
+            if (keeperId != 0)
+                sAgreement.Filter.PersonIDs.Add(keeperId.ToString());
+        }
+
+        protected void OnReportTypeBeforeSearch(object sender)
+        {
+            if (null != sResource.ValueInt)
+                sStoreReportType.GetFilter().ResourceId.Value = sResource.Value;
+            else
+                sStoreReportType.GetFilter().ResourceId.Clear();
+
+            sStoreReportType.GetFilter().PcId.Clear();
+
+            if (null != sKeeperBank.ValueInt)
+                sStoreReportType.GetFilter().PcId.Add(sKeeperBank.Value);
+
+            if (null != sManager.ValueInt)
+                sStoreReportType.GetFilter().PcId.Add(sManager.Value);
+        }
+
+        protected void OnStoreTypeBeforeSearch(object sender)
+        {
+        }
+
+        /*
+        protected void OnReportTypeChanged(object sender, ProperyChangedEventArgs e)
+        {
+            btnAddToReport.Visible = !IsStoreInReport();
+            btnDisplayReport.Visible = !btnAddToReport.Visible;
+        }
+        */
+
+        protected void OnStoreTypeChanged(object sender, ProperyChangedEventArgs e)
+        {
+            if (e.NewValue == null) return;
+
+            if (e.NewValue.Equals(e.OldValue)) return;
+
+            var storeTypeID = 0;
+            if (int.TryParse(e.NewValue, out storeTypeID))
+                SetStoreType(storeTypeID);
+
+            if (e.NewValue.Length > 0)
+                JS.Write("setTimeout(function(){$('#txtName_0').focus();},10);");
+        }
+
+        protected void OnStoreNameChanged(object sender, ProperyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.NewValue)) return;
+
+            sKeeperBank.Focus();
+        }
+
+        protected void OnStoreIbanChanged(object sender, ProperyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.NewValue)) return;
+
+            sKeeperBank.Focus();
+        }
+
+        protected void OnManagerChanged(object sender, ProperyChangedEventArgs e)
+        {
+            sManagerDepartment.ClearSelectedItems();
+            sManagerDepartment.Value = null;
+
+            //sAgreement.ClearSelectedItems();
+            //sAgreement.Value = null;
+
+            GetKeeperManagerFromsAgreement();
+
+            var KeeperCode = sKeeperBank.Value.ToInt();
+            var ManagerCode = sManager.Value.ToInt();
+
+            sAgreement.Visible =
+                (KeeperCode != ManagerCode || KeeperCode == 0 || ManagerCode == 0) && (sStoreType.Value.Length == 0 ||
+                                                                                       sStoreType.Value.Length > 0 &&
+                                                                                       sStoreType.ValueInt > 20);
+            if (sAgreement.Visible) Display("StoreAgreementRow");
+            else Hide("StoreAgreementRow");
+        }
+
+        protected void OnKeeperChanged(object sender, ProperyChangedEventArgs e)
+        {
+            //sAgreement.ClearSelectedItems();
+            //sAgreement.Value = null;
+
+            GetKeeperManagerFromsAgreement();
+
+            var KeeperCode = sKeeperBank.Value.ToInt();
+            var ManagerCode = sManager.Value.ToInt();
+
+            sAgreement.Visible = (KeeperCode != ManagerCode || KeeperCode == 0 || ManagerCode == 0) &&
+                                 (sStoreType.Value.Length == 0 ||
+                                  sStoreType.Value.Length > 0 &&
+                                  sStoreType.ValueInt > 20);
+            if (sAgreement.Visible) Display("StoreAgreementRow");
+            else Hide("StoreAgreementRow");
+        }
+
+        protected void OnAgreementChanged(object sender, ProperyChangedEventArgs e)
+        {
+            GetKeeperManagerFromsAgreement();
+        }
+
+        #endregion
     }
 }

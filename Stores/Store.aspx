@@ -9,8 +9,8 @@
 <head runat="server">
     <title></title>
     <link rel="stylesheet" type="text/css" href="Kesco.Stores.css"/>
-    <script src="Kesco.Stores.js?v=2.1" type="text/javascript"></script>
-    <base target="_self" />
+    <script src="Kesco.Stores.js?v=1" type="text/javascript"></script>
+    <base target="_self"/>
 </head>
 
 <body>
@@ -27,18 +27,18 @@
 <cs:Div ID="ReportPanel" runat="server" CSSClass="wrap_inline_block">
     <fieldset>
         <legend><%= Resources.Resx.GetString("STORE_StoreReportLegend") %></legend>
-        <table>
+        <table style="border-spacing: 0 0;">
             <tr>
                 <td width="140px"><%= Resources.Resx.GetString("STORE_StoreReportType") %>:</td>
                 <td width="260px">
-                    <dbs:DBSStoreReportType ID="sStoreReportType" runat="server" CSSclass="v4_resizable" MaxItemsInPopup="16" IsMultiSelect="True" isRemove="True" OnBeforeSearch="OnReportTypeBeforeSearch"></dbs:DBSStoreReportType>
+                    <dbs:DBSStoreReportType ID="sStoreReportType" runat="server" Width="250px" MaxItemsInPopup="16" IsMultiSelect="True" isRemove="True" OnBeforeSearch="OnReportTypeBeforeSearch"></dbs:DBSStoreReportType>
                 </td>
             </tr>
         </table>
     </fieldset>
 </cs:Div>
 
-<table width="100%">
+<table width="100%" style="border-spacing: 0 0;">
     <tr>
         <!--Период действия склада-->
         <td width="140px"><%= Resources.Resx.GetString("STORE_IsActual") %>:</td>
@@ -57,14 +57,14 @@
     <tr>
         <td><%= Resources.Resx.GetString("STORE_StoreType") %>:</td>
         <td>
-            <dbs:DBSStoreType ID="sStoreType" runat="server" CSSclass="v4_resizable" MaxItemsInPopup="16" AutoSetSingleValue="True" IsRequired="True" OnChanged="OnStoreTypeChanged" NextControl="sStorage"></dbs:DBSStoreType>
+            <dbs:DBSStoreType ID="sStoreType" runat="server" Width="400px" MaxItemsInPopup="16" AutoSetSingleValue="True" IsRequired="True" OnChanged="OnStoreTypeChanged" OnBeforeSearch="OnStoreTypeBeforeSearch" NextControl="sStorage"></dbs:DBSStoreType>
         </td>
     </tr>
     <!--Место хранения-->
     <tr id="StorageRow">
         <td><%= Resources.Resx.GetString("STORE_Residence") %>:</td>
         <td>
-            <dbs:DBSResidence ID="sStorage" runat="server" CSSclass="v4_resizable" CLID="26" NextControl="txtName"></dbs:DBSResidence>
+            <dbs:DBSResidence ID="sStorage" runat="server" Width="400px" CLID="26" NextControl="txtName"></dbs:DBSResidence>
         </td>
     </tr>
     <!--Название склада или номер счета-->
@@ -73,21 +73,21 @@
             <cs:Div ID="NameLabel" runat="server">:</cs:Div>
         </td>
         <td>
-            <cs:StoreNameTextBox ID="txtName" runat="server" CSSclass="v4_resizable" IsRequired="True" NextControl="txtIBAN" OnChanged="OnStoreNameChanged"></cs:StoreNameTextBox>
+            <cs:StoreNameTextBox ID="txtName" runat="server" Width="400px" IsRequired="True" NextControl="txtIBAN" OnChanged="OnStoreNameChanged"></cs:StoreNameTextBox>
         </td>
     </tr>
     <!--IBAN номар счета-->
     <tr id="IbanRow">
         <td><%= Resources.Resx.GetString("STORE_IBAN") %>:</td>
         <td>
-            <cs:TextBox ID="txtIBAN" runat="server" CSSclass="v4_resizable" NextControl="chkAccountNumberUnknown" OnChanged="OnStoreIbanChanged"></cs:TextBox>
+            <cs:TextBox ID="txtIBAN" runat="server" Width="400px" NextControl="chkAccountNumberUnknown" OnChanged="OnStoreIbanChanged"></cs:TextBox>
         </td>
     </tr>
     <!--Номер счета неизвестен-->
     <tr id="AccountNumberUnknownRow">
         <td><%= Resources.Resx.GetString("STORE_AccountUnknown") %>:</td>
         <td>
-            <cs:CheckBox ID="chkAccountNumberUnknown" runat="server" CSSclass="v4_resizable" OnChanged="OnStoreNumberUndefinedChanged" Title="Установить номер счёта неизвестен" NextControl="sKeeperBank"></cs:CheckBox>
+            <cs:CheckBox ID="chkAccountNumberUnknown" runat="server" Width="400px" OnChanged="OnStoreNumberUndefinedChanged" Title="Установить номер счёта неизвестен" NextControl="sKeeperBank"></cs:CheckBox>
         </td>
     </tr>
     <!--Хранитель-->
@@ -96,21 +96,21 @@
             <cs:Div ID="KeeperBankLabel" runat="server">:</cs:Div>
         </td>
         <td>
-            <dbs:DBSPerson ID="sKeeperBank" runat="server" CSSclass="v4_resizable" IsCaller="True" CLID="15" AutoSetSingleValue="True" IsAlwaysAdvancedSearch="True" CallerType="Person" IsRequired="True" NextControl="sManager" OnChanged="OnKeeperChanged"></dbs:DBSPerson>
+            <dbs:DBSPerson ID="sKeeperBank" runat="server" Width="400px" IsCaller="True" CLID="15" AutoSetSingleValue="True" IsAlwaysAdvancedSearch="True" CallerType="Person" IsRequired="True" NextControl="sManager" OnChanged="OnKeeperChanged"></dbs:DBSPerson>
         </td>
     </tr>
     <!--Распорядитель-->
     <tr>
         <td><%= Resources.Resx.GetString("STORE_Manager") %>:</td>
         <td>
-            <dbs:DBSPerson ID="sManager" runat="server" CSSclass="v4_resizable" IsRequired="True" CLID="16" AutoSetSingleValue="True" IsAlwaysAdvancedSearch="True" IsCaller="True" CallerType="Person" NextControl="sManagerDepartment" OnChanged="OnManagerChanged"></dbs:DBSPerson>
+            <dbs:DBSPerson ID="sManager" runat="server" Width="400px" IsRequired="True" CLID="16" AutoSetSingleValue="True" IsAlwaysAdvancedSearch="True" IsCaller="True" CallerType="Person" NextControl="sManagerDepartment" OnChanged="OnManagerChanged"></dbs:DBSPerson>
         </td>
     </tr>
     <!--Подразделение распорядителя-->
     <tr id="ManagerDepartmentRow">
         <td><%= Resources.Resx.GetString("STORE_ManagerDepartment") %>:</td>
         <td>
-            <dbs:DBSPersonDepartment ID="sManagerDepartment" runat="server" CSSclass="v4_resizable" MaxItemsInPopup="16" NextControl="sResource" OnBeforeSearch="OnManagerDepartmentBeforeSearch"></dbs:DBSPersonDepartment>
+            <dbs:DBSPersonDepartment ID="sManagerDepartment" runat="server" Width="400px" MaxItemsInPopup="16" NextControl="sResource" OnBeforeSearch="OnManagerDepartmentBeforeSearch"></dbs:DBSPersonDepartment>
         </td>
     </tr>
     <!--Хранимый ресурс-->
@@ -119,7 +119,7 @@
             <cs:Div ID="ResourceLabel" runat="server">:</cs:Div>
         </td>
         <td>
-            <dbs:DBSResource ID="sResource" runat="server" CSSclass="v4_resizable" IsRequired="True" CLID="17" AutoSetSingleValue="True" NextControl="sAgreement" OnBeforeSearch="OnResourceBeforeSearch"></dbs:DBSResource>
+            <dbs:DBSResource ID="sResource" runat="server" Width="400px" IsRequired="True" CLID="17" AutoSetSingleValue="True" NextControl="sAgreement" OnBeforeSearch="OnResourceBeforeSearch"></dbs:DBSResource>
         </td>
     </tr>
     <!--Договор храненния-->
@@ -135,14 +135,14 @@
             <cs:Div ID="StoreDepartmentLabel" runat="server">:</cs:Div>
         </td>
         <td>
-            <cs:TextArea ID="txtStoreDepartment" runat="server" CSSclass="v4_resizable" Height="60px"></cs:TextArea>
+            <cs:TextArea ID="txtStoreDepartment" runat="server" CSSclass="v4_resizable" Height="60px" Width="400px"></cs:TextArea>
         </td>
     </tr>
     <!--Примечание-->
     <tr>
         <td><%= Resources.Resx.GetString("STORE_Description") %>:</td>
         <td>
-            <cs:TextArea ID="txtDescription" runat="server" CSSclass="v4_resizable" Height="60px"></cs:TextArea>
+            <cs:TextArea ID="txtDescription" runat="server" CSSclass="v4_resizable" Height="60px" Width="400px"></cs:TextArea>
         </td>
     </tr>
 </table>

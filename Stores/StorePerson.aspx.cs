@@ -32,7 +32,7 @@ namespace Kesco.App.Web.Stores
         /// <summary>
         ///     Получение кода лица из строки запроса
         /// </summary>
-        protected int PersonId
+        private int PersonId
         {
             get
             {
@@ -82,6 +82,10 @@ namespace Kesco.App.Web.Stores
         #endregion
 
         #region Инициализация
+
+        protected override void EntityInitialization(Entity copy = null)
+        {
+        }
 
         /// <summary>
         ///     Инициализация контролоа
@@ -190,7 +194,7 @@ namespace Kesco.App.Web.Stores
             #region Директор
 
             dbsSign1.IsAlwaysAdvancedSearch = false;
-            dbsSign1.IsNoAlwaysCreateEntity = true;
+            dbsSign1.IsAlwaysCreateEntity = true;
 
             dbsSign1.Filter.PersonLink = PersonId;
             dbsSign1.Filter.PersonLinkType = 1;
@@ -275,7 +279,6 @@ namespace Kesco.App.Web.Stores
             AddMenuButton(buttons);
         }
 
-
         /// <summary>
         ///     Отображение клиентских элементов в зависимости о наличия счетов опреденнного типа
         /// </summary>
@@ -308,7 +311,6 @@ namespace Kesco.App.Web.Stores
         }
 
         #endregion
-
 
         #region Override
 
@@ -362,7 +364,6 @@ namespace Kesco.App.Web.Stores
         }
 
         #endregion
-
 
         #region Report Settings
 
@@ -488,10 +489,9 @@ namespace Kesco.App.Web.Stores
 
         #endregion
 
-
         #region Handlers
 
-        protected void RadioLang_Changed(object sender, ProperyChangedEventArgs e)
+        private void RadioLang_Changed(object sender, ProperyChangedEventArgs e)
         {
             RenderTextName();
             RenderTextAddress();
@@ -525,7 +525,6 @@ namespace Kesco.App.Web.Stores
         {
             RenderTextOGRN();
         }
-
 
         private void FlagKPP_Changed(object sender, ProperyChangedEventArgs e)
         {
@@ -567,7 +566,6 @@ namespace Kesco.App.Web.Stores
             Spec_Manage();
         }
 
-
         private void FlagValS_Changed(object sender, ProperyChangedEventArgs e)
         {
             if (flagValS.Checked)
@@ -588,7 +586,7 @@ namespace Kesco.App.Web.Stores
             Director_Manage();
         }
 
-        protected void DBSSign1_Changed(object sender, ProperyChangedEventArgs e)
+        private void DBSSign1_Changed(object sender, ProperyChangedEventArgs e)
         {
             DBSSign_Changed("divSign1", dbsSign1.Value, 1);
             JS.Write("SetContolFocus('btnPrint');");
@@ -623,7 +621,7 @@ namespace Kesco.App.Web.Stores
             RenderSignPost(ctrlId, dt.Rows[0][0].ToString());
         }
 
-        protected void DBSCurrency_Changed(object sender, ProperyChangedEventArgs e)
+        private void DBSCurrency_Changed(object sender, ProperyChangedEventArgs e)
         {
             if (dbsCurrency.Value.Length == 0) return;
             dbsStoreValS.Value = "";
@@ -640,7 +638,6 @@ namespace Kesco.App.Web.Stores
         {
             DBSStore_RenderText(dbsStoreSpec.Value, "textSpec");
         }
-
 
         private void DBSStoreValS_Changed(object sender, ProperyChangedEventArgs e)
         {
@@ -703,7 +700,6 @@ namespace Kesco.App.Web.Stores
         }
 
         #endregion
-
 
         #region Manage
 
@@ -769,7 +765,6 @@ namespace Kesco.App.Web.Stores
             dbsStoreSpec.IsDisabled = !flagSpec.Checked;
             dbsStoreSpec.IsRequired = flagSpec.Checked;
         }
-
 
         /// <summary>
         ///     Управление контролом выбора валютных счетов
@@ -837,7 +832,6 @@ namespace Kesco.App.Web.Stores
         }
 
         #endregion
-
 
         #region Render
 
@@ -918,7 +912,6 @@ namespace Kesco.App.Web.Stores
             }
         }
 
-
         /// <summary>
         ///     Отрисовка КПП
         /// </summary>
@@ -955,7 +948,6 @@ namespace Kesco.App.Web.Stores
         }
 
         #endregion
-
 
         #region Adv functions
 

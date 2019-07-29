@@ -4,9 +4,9 @@ var control;
 var multiReturn;
 
 var mvc = 0;
-var domain = '';
-var storesUrl = 'Store.aspx';
-var storeReportUrl = 'StoreOrder.aspx';
+var domain = "";
+var storesUrl = "Store.aspx";
+var storeReportUrl = "StoreOrder.aspx";
 var isReturn = false;
 
 var pred_prefix = "pred";
@@ -20,15 +20,15 @@ var StoreSavedCreatedNotificationCallBack = SearchStore;
 function SetDialogOkHandler(href_url) {
     var newDiv = document.createElement("div");
     newDiv.id = "ErrHandler";
-    newDiv.focus = function () {
+    newDiv.focus = function() {
         window.location.replace(href_url);
-    }
+    };
     document.body.appendChild(newDiv);
 }
 
 //Сохраняет параметры склада
 function SaveStore(param) {
-   cmd('cmd', 'SaveButton', 'param', param);
+    cmd("cmd", "SaveButton", "param", param);
 }
 
 
@@ -42,20 +42,22 @@ function SetResizableInDialog() {
     if (window.dialogWidth && window.dialogHeight) {
         //Ширина вертикальной полосы прокрутки
         //SetResizableInDialog.offset = document.documentElement.offsetWidth - document.documentElement.clientWidth;
-        window.addEventListener('resize', function () {
-            /*
-            var vsb_offset = 0;
-            if (window.innerHeight > document.documentElement.clientHeight) {
-                //Отображена вертикальная полоса прокрутки
-                vsb_offset = SetResizableInDialog.offset;
-            }
-            console.log(vsb_offset);
-            */
-            document.documentElement.style.width = document.documentElement.clientWidth + "px"; // vsb_offset + "px"; //window.dialogWidth;
-            //console.log(window.dialogWidth + "/" + document.documentElement.clientWidth + "/" + document.documentElement.offsetWidth + "/" + document.documentElement.scrollWidth + "/" + window.innerWidth + " " + window.dialogHeight + "/" + document.documentElement.clientHeight + "/" + document.documentElement.offsetHeight + "/" + document.documentElement.scrollHeight + "/" + window.innerHeight);
-            //document.documentElement.style.height = document.documentElement.clientHeight; //window.dialogHeight;
-        },
-        false);
+        window.addEventListener("resize",
+            function() {
+                /*
+                var vsb_offset = 0;
+                if (window.innerHeight > document.documentElement.clientHeight) {
+                    //Отображена вертикальная полоса прокрутки
+                    vsb_offset = SetResizableInDialog.offset;
+                }
+                console.log(vsb_offset);
+                */
+                document.documentElement.style.width =
+                    document.documentElement.clientWidth + "px"; // vsb_offset + "px"; //window.dialogWidth;
+                //console.log(window.dialogWidth + "/" + document.documentElement.clientWidth + "/" + document.documentElement.offsetWidth + "/" + document.documentElement.scrollWidth + "/" + window.innerWidth + " " + window.dialogHeight + "/" + document.documentElement.clientHeight + "/" + document.documentElement.offsetHeight + "/" + document.documentElement.scrollHeight + "/" + window.innerHeight);
+                //document.documentElement.style.height = document.documentElement.clientHeight; //window.dialogHeight;
+            },
+            false);
     }
 }
 
@@ -63,18 +65,17 @@ function SetResizableInDialog() {
 // Read a page's GET URL variables and return them as an associative array.
 function getUrlVars() {
     var vars = [], hash;
-    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    var hashes = window.location.href.slice(window.location.href.indexOf("?") + 1).split("&");
     for (var i = 0; i < hashes.length; i++) {
-        hash = hashes[i].split('=');
+        hash = hashes[i].split("=");
         vars.push(hash[0]);
         vars[hash[0]] = hash[1];
     }
     return vars;
 }
 
-function ReturnValuePostForm(value, doEscape)
-{
-    var form = document.getElementById('mvcDialogResult');
+function ReturnValuePostForm(value, doEscape) {
+    var form = document.getElementById("mvcDialogResult");
     if (!form) return;
 
     var val = JSON.stringify(value);
@@ -87,27 +88,25 @@ function ReturnValuePostForm(value, doEscape)
     //setTimeout(function () { parent.closeWindow(); }, 2000);
 }
 
-function ReturnValueSetCookie(storeId)
-{
-    document.cookie = 'DlgRez=1;domain=' + domain + ';path=/';
-    document.cookie = 'RetVal=' + storeId + ';domain=' + domain + ';path=/';
-    document.cookie = 'ParentAction=0;domain=' + domain + ';path=/';
+function ReturnValueSetCookie(storeId) {
+    document.cookie = "DlgRez=1;domain=" + domain + ";path=/";
+    document.cookie = "RetVal=" + storeId + ";domain=" + domain + ";path=/";
+    document.cookie = "ParentAction=0;domain=" + domain + ";path=/";
 
     try {
         window.returnValue = storeId;
+    } catch (e) {
     }
-    catch (e) { }
 
-    var version = parseFloat(navigator.appVersion.split('MSIE')[1]);
+    var version = parseFloat(navigator.appVersion.split("MSIE")[1]);
     if (version < 7)
         window.opener = this;
     else
-        window.open('', '_parent', '');
+        window.open("", "_parent", "");
     window.close();
 }
 
-function ReturnValue(storeId, storeName)
-{
+function ReturnValue(storeId, storeName) {
     if (mvc == 1 || mvc == 4) {
         var result = [];
 
@@ -117,8 +116,7 @@ function ReturnValue(storeId, storeName)
         };
 
         ReturnValuePostForm(result, true);
-    }
-    else {
+    } else {
         ReturnValueSetCookie(storeId);
     }
 }
@@ -126,7 +124,7 @@ function ReturnValue(storeId, storeName)
 //Функция устанавливает размеры и положение окна обозревателя
 function SetWindowSizePos(x, y, width, height) {
 
-    window.addEventListener('beforeunload', SrvSendWindowSizePos, false);
+    window.addEventListener("beforeunload", SrvSendWindowSizePos, false);
 
     var cw = width;
     var ch = height;
@@ -134,9 +132,8 @@ function SetWindowSizePos(x, y, width, height) {
     if (window.dialogWidth && window.dialogHeight) {
         window.dialogWidth = cw + "px";
         window.dialogHeight = ch + "px";
-    }
-    else {
-        if (typeof (window.innerWidth) == 'number') {
+    } else {
+        if (typeof (window.innerWidth) == "number") {
             // Modern browsers
             cw = width + (window.outerWidth - window.innerWidth);
             ch = height + (window.outerHeight - window.innerHeight);
@@ -160,16 +157,15 @@ function SetWindowSizePos(x, y, width, height) {
 //Функция передает размеры и положение окна обозревателя на сервер
 function SrvSendWindowSizePos() {
 
-    window.removeEventListener('beforeunload', SrvSendWindowSizePos, false);
+    window.removeEventListener("beforeunload", SrvSendWindowSizePos, false);
 
     var cw = 0;
     var ch = 0;
     if (window.dialogWidth && window.dialogHeight) {
         cw = parseInt(window.dialogWidth, 10);
         ch = parseInt(window.dialogHeight, 10);
-    }
-    else {
-        if (typeof (window.innerWidth) == 'number') {
+    } else {
+        if (typeof (window.innerWidth) == "number") {
             // Modern browsers
             cw = window.innerWidth;
             ch = window.innerHeight;
@@ -183,7 +179,7 @@ function SrvSendWindowSizePos() {
     var winLeft = window.screenLeft ? window.screenLeft : window.screenX;
     var winTop = window.screenTop ? window.screenTop : window.screenY;
 
-    cmd('cmd', 'SaveWindowSizePos', 'x', winLeft, 'y', winTop, 'width', cw, 'height', ch);
+    cmd("cmd", "SaveWindowSizePos", "x", winLeft, "y", winTop, "width", cw, "height", ch);
 }
 
 //Функция добавляет склад в отчёт по складам
@@ -195,23 +191,26 @@ function SrvSendWindowSizePos() {
 function ClearSearchForm() {
     FilterDescriptionHide();
     //EditFilter();
-    cmd('cmd', 'ClearButton');
+    cmd("cmd", "ClearButton");
 }
 
 //Функция открывает окно для создания нового склада
-function CreateNewStore(params)
-{
+function CreateNewStore(params) {
     var store_url = storesUrl;
     if (params != null && params.length > 0)
         store_url += params;
-    var w = v4_windowOpen(store_url, "NewStore", "menubar=no, location=no, resizable=yes, scrollbars=yes, status=no, height=500px, width=600px");
-    if (w!=null) w.focus();
+    var w = v4_windowOpen(store_url,
+        "NewStore",
+        "menubar=no, location=no, resizable=yes, scrollbars=yes, status=no, height=500px, width=600px");
+    if (w != null) w.focus();
 }
 
 //Функция открывает окно для редактирования склада
 function EditStore(store_id) {
-    var store_url = storesUrl + '&id=' + store_id;
-    var w = v4_windowOpen(store_url, "_blank", "menubar=no, location=no, resizable=yes, scrollbars=yes, status=no, height=500px, width=600px");
+    var store_url = storesUrl + "&id=" + store_id;
+    var w = v4_windowOpen(store_url,
+        "_blank",
+        "menubar=no, location=no, resizable=yes, scrollbars=yes, status=no, height=500px, width=600px");
     if (w != null) w.focus();
 }
 
@@ -222,8 +221,10 @@ function EditStore(store_id) {
 
 //Функция добавляет склад в отчёт указанного типа по складам, вызывается в ответе сервера
 function SrvDisplayStoresReport(report_type) {
-    var store_url = storeReportUrl + '&StoreRprtType=' + report_type;
-    var w = v4_windowOpen(store_url, "NewStore", "menubar=no, location=no, resizable=yes, scrollbars=yes, status=no, height=500px, width=600px");
+    var store_url = storeReportUrl + "&StoreRprtType=" + report_type;
+    var w = v4_windowOpen(store_url,
+        "NewStore",
+        "menubar=no, location=no, resizable=yes, scrollbars=yes, status=no, height=500px, width=600px");
     if (w != null) w.focus();
 }
 
@@ -232,21 +233,18 @@ function SearchStore() {
     //FilterDescriptionShow();
     //$("#SearchFilter").hide();
     //$("#editFilter").show();
-
-    Wait.render(true);
-    cmdasync('cmd', 'SearchButton');
+    cmdasync("cmd", "SearchButton");
 }
 
 //Функция осуществляет сортировку результатов по указанной колонке
 function SortResultTable(column) {
-    Wait.render(true);
-    cmdasync('cmd', 'SortColumn', 'sort_column', column);
+    cmdasync("cmd", "SortColumn", "sort_column", column);
 }
 
 //Функция отображает результаты поиска как несоответствующие установленному фильтру
 function GrayResultTable() {
     var table = $("#SearchResultTable");
-    table.attr('class', 'Grid8Grayed');
+    table.attr("class", "Grid8Grayed");
     $("#SearchResultTable>thead>tr>th a").contents().unwrap();
     //var input_el = $("#SearchResultTable>tbody>tr>td:eq(0)>input[type=image]");
     //input_el.attr("src", "/Styles/EditGray.gif");
@@ -303,8 +301,7 @@ function NotifyParentWindow(id, name) {
     try {
         if (null != window.opener && null != window.opener.OnNewStoreCreated)
             window.opener.OnNewStoreCreated(id, name);
-    }
-    catch (e) {
+    } catch (e) {
     }
 }
 
@@ -354,34 +351,35 @@ function RemoveSrchFormPredicate(pred) {
 function RestoreSrchFormSettings(required, ids) {
     SetupForm.requiredSearchPredicates = required;
     //var ids = settings.split(/[ ,]/);
-    $.each(ids, function (index, value) {
-        var n = required.indexOf(value);
-        if (n < 0) {
-            $("#" + pred_prefix + value).hide();
-            var e = document.getElementById(display_prefix + value);
-            if (e) e.checked = false;
-        }
-    });
+    $.each(ids,
+        function(index, value) {
+            var n = required.indexOf(value);
+            if (n < 0) {
+                $("#" + pred_prefix + value).hide();
+                var e = document.getElementById(display_prefix + value);
+                if (e) e.checked = false;
+            }
+        });
 }
 
 //Функции передает на сервер настройки отображения полей поиска на странице
 function SaveSrchFormSettings() {
 
-    var settings = '';
+    var settings = "";
 
-    $("#setupForm #setupFormPredicates input:checkbox:checked").each(function () {
-        if (settings.length>0) settings += ',';
+    $("#setupForm #setupFormPredicates input:checkbox:checked").each(function() {
+        if (settings.length > 0) settings += ",";
         var displayId = this.id.substr(display_prefix_len);
         settings += displayId;
     });
 
     var checked = $("#SearchFilterDescription:visible").length > 0; //$("#display_SearchDescription").prop('checked');
 
-    cmd('cmd', 'SaveSrchPageSettings', 'settings', settings, 'display', checked ? "1" : "0");
+    cmd("cmd", "SaveSrchPageSettings", "settings", settings, "display", checked ? "1" : "0");
 
-    $(this).dialog('close');
+    $(this).dialog("close");
 
-    $("#setupForm #setupFormPredicates input:checkbox").each(function () {
+    $("#setupForm #setupFormPredicates input:checkbox").each(function() {
 
         var displayId = this.id.substr(display_prefix_len);
         if (this.checked) $("#" + pred_prefix + displayId).show();
@@ -409,17 +407,20 @@ function SetupForm() {
             modal: true,
             title: StrResources.SetupFields,
             buttons: [
-                { id: 'btnSave', text: StrResources.BtnSave, click: SaveSrchFormSettings },
-                { id: 'btnCancel', text: StrResources.BtnCancel, click: function () {
-                        $(this).dialog('close');
+                { id: "btnSave", text: StrResources.BtnSave, click: SaveSrchFormSettings },
+                {
+                    id: "btnCancel",
+                    text: StrResources.BtnCancel,
+                    click: function() {
+                        $(this).dialog("close");
                     }
                 }
             ],
-            open: function () { $("#btnSave").focus(); }
+            open: function() { $("#btnSave").focus(); }
         });
     }
 
-    $("#setupForm #setupFormPredicates input:checkbox").each(function () {
+    $("#setupForm #setupFormPredicates input:checkbox").each(function() {
 
         var displayId = this.id.substr(display_prefix_len);
 
@@ -439,5 +440,5 @@ function SetupForm() {
         */
     });
 
-    SetupForm.setup_dialog.dialog('open');
+    SetupForm.setup_dialog.dialog("open");
 }

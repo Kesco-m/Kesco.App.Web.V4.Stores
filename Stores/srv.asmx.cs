@@ -83,7 +83,8 @@ namespace Kesco.App.Web.Stores
                     }
                 }
 
-                da = new SqlDataAdapter(string.Format("{0} {1}" , SQLQueries.SELECT_ПоискСкладовПоНазванию, sqlWhere) , Config.DS_person);
+                da = new SqlDataAdapter(string.Format("{0} {1}", SQLQueries.SELECT_ПоискСкладовПоНазванию, sqlWhere),
+                    Config.DS_person);
                 da.SelectCommand.Parameters.AddWithValue("@searchText", searchText);
                 da.Fill(dt);
                 rCount = dt.Rows.Count;
@@ -139,13 +140,11 @@ namespace Kesco.App.Web.Stores
                     cm.Connection.Close();
                     cm.Dispose();
                 }
-
             }
 
             if (retVal.Equals("-1")) retVal = "#" + id;
             return retVal;
         }
-
 
 
         [WebMethod(Description = @"<br><pre>
